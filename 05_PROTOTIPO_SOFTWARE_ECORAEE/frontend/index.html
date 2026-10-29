@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoRAEE Cloud — Trazabilidad y Optimización de Residuos Electrónicos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Encabezado Institucional y Barra Superior -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <div class="logo-icon">♻️</div>
+                <div>
+                    <h1>EcoRAEE Cloud</h1>
+                    <span class="subtitle">UIDE / Arizona State University — Economía Circular</span>
+                </div>
+            </div>
+
+            <!-- Selector Rápido de Perfiles (RBAC / CP-01) -->
+            <div class="user-profile-bar">
+                <div class="role-selector-container">
+                    <label for="roleSelector">Rol Activo:</label>
+                    <select id="roleSelector" class="role-select">
+                        <option value="ROL_ADMIN">Administrador General (admin_sys)</option>
+                        <option value="ROL_OPERADOR" selected>Operador de Acopio (carlos.operador)</option>
+                        <option value="ROL_TECNICO">Técnico de Diagnóstico (maria.tecnico)</option>
+                        <option value="ROL_LOGISTICA">Coordinador Logístico (diego.logistica)</option>
+                        <option value="ROL_AUDITOR">Auditor de Sostenibilidad (ana.auditora)</option>
+                    </select>
+                </div>
+                <div class="system-status-badge online" id="apiStatusBadge">
+                    <span class="status-dot"></span> <span id="apiStatusText">API Conectada</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <!-- Navegación Lateral -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span> Dashboard Ejecutivo
+                </button>
+                <button class="nav-item" data-view="register">
+                    <span class="nav-icon">🏷️</span> Registro con Código QR
+                </button>
+                <button class="nav-item" data-view="traceability">
+                    <span class="nav-icon">🔍</span> Trazabilidad Ininterrumpida
+                </button>
+                <button class="nav-item" data-view="network">
+                    <span class="nav-icon">⚡</span> Optimización de Flujo (Edmonds-Karp)
+                </button>
+                <button class="nav-item" data-view="accessibility">
+                    <span class="nav-icon">♿</span> Inclusión y Accesibilidad
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p><strong>Campus Quito (UIDA)</strong></p>
+                <p class="text-muted">Versión 1.0.0-MVP (AWS Free Tier)</p>
+            </div>
+        </aside>
+
+        <!-- Contenedor Principal de Vistas -->
+        <main class="main-content">
+            
+            <!-- VISTA 1: DASHBOARD EJECUTIVO -->
+            <section id="view-dashboard" class="content-view active">
+                <div class="view-header">
+                    <h2>Panel de Métricas y Gobernanza Circular</h2>
+                    <p class="view-desc">Monitoreo en tiempo real del flujo de RAEE en el campus universitario (RF-INT-05).</p>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Total RAEE Captado</span>
+                            <span class="kpi-badge badge-green">Activo</span>
+                        </div>
+                        <div class="kpi-value" id="kpiTotalKg">142.10 <span class="unit">kg</span></div>
+                        <p class="kpi-subtext">3 Lotes recibidos en el semestre</p>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Tasa de Reutilización</span>
+                            <span class="kpi-badge badge-blue">Impacto Social</span>
+                        </div>
+                        <div class="kpi-value" id="kpiReutRate">65.5 <span class="unit">%</span></div>
+                        <p class="kpi-subtext">Aprobados para donación comunitaria</p>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Tasa de Reciclaje / Chatarra</span>
+                            <span class="kpi-badge badge-amber">Valorización</span>
+                        </div>
+                        <div class="kpi-value" id="kpiRecicRate">34.5 <span class="unit">%</span></div>
+                        <p class="kpi-subtext">Canalizados a gestor autorizado</p>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Capacidad Logística Semanal</span>
+                            <span class="kpi-badge badge-purple">Edmonds-Karp</span>
+                        </div>
+                        <div class="kpi-value">3,100 <span class="unit">kg/sem</span></div>
+                        <p class="kpi-subtext">Flujo máximo sin saturación vial</p>
+                    </div>
+                </div>
+
+                <!-- Tabla de Dispositivos Recientes en Inventario -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Inventario Activo en Campus</h3>
+                        <span class="text-muted">Consulta rápida de equipos y condición</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Código QR</th>
+                                    <th>Tipo / Modelo</th>
+                                    <th>Centro Actual</th>
+                                    <th>Peso (kg)</th>
+                                    <th>Estado Actual</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 2: REGISTRO CON CÓDIGO QR (CP-02 / RN-01) -->
+            <section id="view-register" class="content-view">
+                <div class="view-header">
+                    <h2>Recepción y Registro con Código QR Único</h2>
+                    <p class="view-desc">Ingreso físico de equipos en centros de acopio con verificación de unicidad (CP-02 / RN-01).</p>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <form id="deviceRegisterForm">
+                            <div class="form-group">
+                                <label for="regQr">Código QR Único (Identificador Inmutable) *</label>
+                                <div class="input-with-button">
+                                    <input type="text" id="regQr" required placeholder="Ej: QR-UIDA-PC-008" class="font-mono">
+                                    <button type="button" class="btn btn-secondary" id="btnGenQr">🎲 Autogenerar</button>
+                                </div>
+                                <small class="text-muted">El sistema rechazará códigos duplicados (CP-02).</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="regSerial">Número de Serie de Fábrica</label>
+                                <input type="text" id="regSerial" placeholder="Ej: SN-DELL-88399X" class="font-mono">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="regModel">Modelo de Equipo *</label>
+                                    <select id="regModel" required>
+                                        <option value="1">Dell OptiPlex 7070 (Desktop)</option>
+                                        <option value="2">Dell Latitude 5400 (Laptop)</option>
+                                        <option value="3">HP EliteDesk 800 (Desktop)</option>
+                                        <option value="4">HP ProBook 450 (Laptop)</option>
+                                        <option value="6">Dell UltraSharp 24" (Monitor)</option>
+                                        <option value="8">Apple iPad 9th Gen (Tablet)</option>
+                                        <option value="11">Samsung Galaxy A52 (Teléfono)</option>
+                                        <option value="12">Cisco Catalyst 2960 (Switch)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="regCenter">Centro de Acopio Inicial *</label>
+                                    <select id="regCenter" required>
+                                        <option value="1">Campus Principal Matriz (Quito)</option>
+                                        <option value="2">Punto Satélite Campus Granados</option>
+                                        <option value="3">Taller Técnico Lab-300</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="regWeight">Peso Físico (kg) *</label>
+                                    <input type="number" id="regWeight" step="0.01" min="0.05" value="7.80" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="regCondition">Condición Inicial *</label>
+                                    <select id="regCondition" required>
+                                        <option value="1">Operativo en Buen Estado</option>
+                                        <option value="2" selected>Operativo con Desgaste</option>
+                                        <option value="3">Dañado pero Reparable</option>
+                                        <option value="4">Obsoleto / Chatarra</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="regObservations">Observaciones de Recepción</label>
+                                <textarea id="regObservations" rows="2" placeholder="Detalles de entrega, faltantes de cables o estado de la pantalla..."></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btnSubmitRegister">
+                                    📥 Registrar en Inventario e Historial
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card preview-card">
+                        <h3>Etiqueta Digital de Trazabilidad</h3>
+                        <div class="qr-preview-box">
+                            <div class="qr-code-placeholder" id="qrVisualBox">
+                                <div class="qr-pattern"></div>
+                                <span class="qr-text" id="qrPreviewText">QR-UIDA-PC-008</span>
+                            </div>
+                            <div class="qr-meta">
+                                <p><strong>UIDA EcoRAEE Cloud</strong></p>
+                                <p class="text-muted">Propiedad Institucional / Monitoreo Ambiental</p>
+                                <span class="badge badge-green mt-2">Listo para Etiquetado</span>
+                            </div>
+                        </div>
+
+                        <div id="registerAlertBox" class="alert-box d-none"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 3: TRAZABILIDAD EN TIEMPO REAL (CP-14 / RN-01) -->
+            <section id="view-traceability" class="content-view">
+                <div class="view-header">
+                    <h2>Consulta de Trazabilidad Ininterrumpida</h2>
+                    <p class="view-desc">Historial ordenado y verificable desde el registro hasta el destino final (CP-14 / RN-01 / RN-08).</p>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="search-bar">
+                        <input type="text" id="searchQrInput" placeholder="Escanea o escribe el Código QR (Ej: QR-UIDA-PC-001, QR-UIDA-MO-007)..." class="font-mono">
+                        <button class="btn btn-primary" id="btnSearchQr">🔍 Rastrear Dispositivo</button>
+                    </div>
+                    <div class="quick-tags">
+                        <span class="text-muted">Ejemplos rápidos:</span>
+                        <button class="tag-btn" data-qr="QR-UIDA-PC-001">QR-UIDA-PC-001 (Apto Donación)</button>
+                        <button class="tag-btn" data-qr="QR-UIDA-PC-002">QR-UIDA-PC-002 (En Reparación)</button>
+                        <button class="tag-btn" data-qr="QR-UIDA-MO-007">QR-UIDA-MO-007 (Cerrado Reciclaje)</button>
+                    </div>
+                </div>
+
+                <div id="traceabilityDetails" class="d-none">
+                    <div class="grid-2col">
+                        <!-- Ficha Técnica -->
+                        <div class="card">
+                            <h3>Ficha Técnica del Activo</h3>
+                            <div class="device-summary" id="deviceSummaryBox">
+                                <!-- Contenido inyectado -->
+                            </div>
+
+                            <!-- Formulario de Transición de Estado (CP-03) -->
+                            <div class="transition-box mt-4">
+                                <h4>Registrar Nueva Transición de Estado (CP-03)</h4>
+                                <form id="transitionStateForm">
+                                    <div class="form-group">
+                                        <label for="nextStateSelect">Siguiente Estado:</label>
+                                        <select id="nextStateSelect">
+                                            <option value="3">EVALUADO (Técnico Lab-300)</option>
+                                            <option value="4">EN_REACONDICIONAMIENTO (Taller)</option>
+                                            <option value="5">LISTO_DONACION (Aprobado)</option>
+                                            <option value="6">TRANSFERIDO_RECICLAJE (Gestor)</option>
+                                            <option value="7">TRAZABILIDAD_CERRADA (Destino Final)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="stateObs">Observación Técnica:</label>
+                                        <input type="text" id="stateObs" required placeholder="Motivo o resultado del cambio de fase...">
+                                    </div>
+                                    <button type="submit" class="btn btn-secondary">🔄 Ejecutar Transición Atómica</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Línea de Tiempo Inmutable (Timeline) -->
+                        <div class="card">
+                            <h3>Línea de Vida Inmutable (Historial de Estados)</h3>
+                            <div class="timeline" id="timelineContainer">
+                                <!-- Pasos de la línea de tiempo inyectados -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 4: OPTIMIZACIÓN DE FLUJO LOGÍSTICO (EDMONDS-KARP / CP-08 / CP-09) -->
+            <section id="view-network" class="content-view">
+                <div class="view-header">
+                    <h2>Optimización de Red y Análisis de Cuellos de Botella</h2>
+                    <p class="view-desc">Ejecución del algoritmo Edmonds-Karp y Teorema de Corte Mínimo (RF-MD-04 / CP-07 / CP-08 / CP-09).</p>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="scenario-bar">
+                        <div>
+                            <strong>Seleccionar Escenario Operativo:</strong>
+                            <p class="text-muted">Simulación comparativa de capacidades de transporte semanal (RF-MD-05)</p>
+                        </div>
+                        <div class="toggle-group">
+                            <button class="btn-toggle active" data-scenario="BASE">Escenario Base Normal</button>
+                            <button class="btn-toggle" data-scenario="CONTINGENCIA">Escenario 2: Contingencia Vial Sur</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <!-- Representación Gráfica de la Red -->
+                    <div class="card">
+                        <h3>Topología del Ecosistema Logístico</h3>
+                        <div class="network-canvas-container">
+                            <svg class="network-svg" id="networkSvg" viewBox="0 0 650 360">
+                                <!-- Aristas y Nodos renderizados dinámicamente -->
+                            </svg>
+                        </div>
+                        <div class="legend-bar">
+                            <span class="legend-item"><span class="dot dot-green"></span> Arista con Capacidad</span>
+                            <span class="legend-item"><span class="dot dot-red"></span> Arista Saturada (Cuello de Botella)</span>
+                        </div>
+                    </div>
+
+                    <!-- Métricas y Resultados del Algoritmo -->
+                    <div class="card">
+                        <h3>Resultados del Algoritmo de Flujo Máximo</h3>
+                        
+                        <div class="metric-highlight">
+                            <div class="metric-title">Flujo Máximo Transportable:</div>
+                            <div class="metric-big" id="maxFlowValue">3,100.00 <span class="unit">kg/semana</span></div>
+                            <div class="metric-sub" id="cutCapValue">Capacidad del Corte Mínimo: 3,100.00 kg/semana</div>
+                        </div>
+
+                        <div class="bottleneck-box" id="bottleneckNotice">
+                            <h4>⚠️ Cuellos de Botella Identificados (Corte Mínimo):</h4>
+                            <ul id="bottleneckList">
+                                <li>Campus Matriz &rarr; ReciclaMetal Sur (1,500 kg)</li>
+                                <li>Taller Lab-300 &rarr; ReciclaMetal Sur (1,000 kg)</li>
+                                <li>Taller Lab-300 &rarr; Fundación Calderón (600 kg)</li>
+                            </ul>
+                        </div>
+
+                        <div class="decision-card" id="decisionText">
+                            <strong>Dictamen para Decisiones Logísticas:</strong>
+                            <p>En condiciones normales, la red se encuentra acotada por la tasa de procesamiento del Taller Técnico (1600 kg máx de salida). El flujo total satisface la demanda estándar del campus.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA 5: INCLUSIÓN Y ACCESIBILIDAD (RNF-07 / CP-15) -->
+            <section id="view-accessibility" class="content-view">
+                <div class="view-header">
+                    <h2>Usabilidad, Inclusión y Alfabetización Digital</h2>
+                    <p class="view-desc">Verificación de interfaces amigables para operadores de bodega y usuarios con baja alfabetización digital (RNF-07 / CP-15).</p>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <h3>Ajustes de Accesibilidad Inclusiva</h3>
+                        <div class="setting-item">
+                            <div>
+                                <strong>Modo de Alto Contraste</strong>
+                                <p class="text-muted">Aumenta los contrastes de texto para visualización en bodegas con baja iluminación.</p>
+                            </div>
+                            <button class="btn btn-secondary" id="btnToggleContrast">👁️ Alternar Contraste</button>
+                        </div>
+
+                        <div class="setting-item mt-3">
+                            <div>
+                                <strong>Tamaño de Fuente Ampliado</strong>
+                                <p class="text-muted">Facilita la lectura en terminales móviles o para personal con visión reducida.</p>
+                            </div>
+                            <button class="btn btn-secondary" id="btnToggleFontSize">🔍 Aumentar Fuente</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Reporte de Evaluación con Usuarios Simulados (CP-15)</h3>
+                        <div class="audit-checklist">
+                            <div class="check-item checked">
+                                <span class="check-icon">✓</span>
+                                <div>
+                                    <strong>Reducción de Sobrecarga de Datos:</strong>
+                                    <p class="text-muted">El formulario autogenera códigos QR y predetermina pesos habituales para evitar reingresos manuales.</p>
+                                </div>
+                            </div>
+                            <div class="check-item checked">
+                                <span class="check-icon">✓</span>
+                                <div>
+                                    <strong>Mensajes de Error Comprensibles:</strong>
+                                    <p class="text-muted">En lugar de códigos de error SQL/HTTP crudos, la interfaz explica en lenguaje claro la acción requerida.</p>
+                                </div>
+                            </div>
+                            <div class="check-item checked">
+                                <span class="check-icon">✓</span>
+                                <div>
+                                    <strong>Indicadores Visuales por Color y Forma:</strong>
+                                    <p class="text-muted">Los estados usan iconos además de colores para evitar exclusión de personas con daltonismo.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Script Principal de la SPA -->
+    <script src="app.js"></script>
+</body>
+</html>

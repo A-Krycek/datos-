@@ -1,0 +1,51 @@
+================================================================================
+PROYECTO INTEGRADOR: EcoRAEE Cloud (Quinto Semestre 2026 - UIDE / ASU)
+PAQUETE CONSOLIDADO DE RECURSOS PARA EL EQUIPO DE TRABAJO
+INTEGRANTES: Daniel Pazmiño, Matias Herrera, Ihair Llamuca
+DOCENTE: Ing. María del Carmen Salazar Torres
+================================================================================
+
+Hola compañeros. En esta carpeta se encuentra TODO el trabajo y contexto
+del proyecto EcoRAEE Cloud organizado para que podamos coordinarnos y presentar
+la Fase 2 de Base de Datos sin contratiempos.
+
+ESTRUCTURA DE CARPETAS:
+--------------------------------------------------------------------------------
+00_INSTRUCCIONES_Y_PLAN_DE_TRABAJO/
+   * PLAN_TRABAJO_3_INTEGRANTES_ECORAEE.md -> División detallada de quién hace qué
+     para no bloquearnos entre nosotros (Integrantes A, B y C).
+   * RETROALIMENTACION_DOCENTE_BDD_19_OCT.md -> Comentarios de la Ing. Salazar
+     sobre la clave parcial de DETALLE_MOVIMIENTO y la eliminación de términos
+     comerciales (facturas, pedidos, clientes).
+   * proyecto_integrador_ecoraee_master.md -> Contexto global del sistema.
+
+01_ENTREGA_FASE2_SQL_SERVER/ (¡LO QUE SE SUBE A LA CALIFICACIÓN!)
+   * 01_DDL.sql -> Script que crea BD_ECORAEE_CLOUD con las 30 tablas y restricciones.
+   * 02_DML.sql -> 32 dispositivos y los 4 ciclos completos (Reutilizable, Reparable,
+                   Reciclable y No Recuperable).
+   * 03_pruebas.sql -> Las 5 pruebas que SQL Server rechaza por diseño.
+   * 04_consultas.sql -> Las 5 consultas analíticas solicitadas en la rúbrica.
+   * DOCUMENTO_ENTREGA_FASE2_BDD.docx -> Informe en Word listo para abrir, pegar
+     las capturas de pantalla de SSMS y guardar en PDF.
+   * DOCUMENTO_ENTREGA_FASE2_BDD.md -> Versión en Markdown del informe.
+   * EcoRAEE_Grupo_Pazmino_Herrera_Llamuca_Fase2_BDD.zip -> Archivo comprimido con
+     los 4 scripts y el documento, listo para la plataforma.
+
+02_MODELO_CONCEPTUAL_Y_EER_APROBADO/
+   * diagrama entidad relacion actual.pdf -> El modelo EER oficial y aprobado.
+   * Proyecto Integrador Fase 1.pdf -> Entrega de la fase previa.
+
+03_MATEMATICA_Y_OPTIMIZACION_RED_LOGISTICA/
+   * 01_formalizacion_matematica_rf_md_02.md -> Modelo de red y capacidades.
+   * 02_demostracion_manual_flujo_maximo.md -> Demostración de Edmonds-Karp.
+   * edmonds_karp.py -> Script ejecutable en Python del algoritmo.
+
+04_ARQUITECTURA_CLOUD_AWS/
+   * 01_cloud_architecture_blueprint.md -> Diseño cloud para cuenta personal AWS
+     (motor económico, S3 para fotos, Lambda y ECS).
+   * 02_cloudformation_ecoraee.yaml -> Plantilla de infraestructura como código.
+
+05_PROTOTIPO_SOFTWARE_ECORAEE/
+   * backend/ -> API REST modular en FastAPI con JWT y endpoint de flujo máximo.
+   * frontend/ -> Interfaz web SPA con registro de equipos, timeline y mapa de red.
+================================================================================

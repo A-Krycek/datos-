@@ -1,0 +1,292 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  EcoRAEE Cloud - Plantilla de Infraestructura como Codigo (IaC) en AWS
+  Proyecto Integrador 5to Semestre - UIDE / Arizona State University
+  Optimizada para Costo Cero ($0.00 USD) en AWS Free Tier
+
+Parameters:
+  EnvironmentName:
+    Description: Nombre del entorno de despliegue
+    Type: String
+    Default: dev
+  
+  DBMasterUsername:
+    Description: Nombre de usuario administrador de la base de datos PostgreSQL
+    Type: String
+    Default: ecoraee_admin
+    NoEcho: false
+
+  DBMasterPassword:
+    Description: Password del administrador de la base de datos PostgreSQL
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    MaxLength: 41
+    AllowedPattern: "[a-zA-Z0-9!^&*-_+=]+"
+    ConstraintDescription: Debe tener al menos 8 caracteres alfanumericos.
+
+Resources:
+  # ==========================================================================
+  # 1. RED VIRTUAL (AMAZON VPC) Y CONECTIVIDAD
+  # ==========================================================================
+  EcoRAEEVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-vpc-${EnvironmentName}
+        - Key: Project
+          Value: EcoRAEE-Cloud
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-igw-${EnvironmentName}
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref EcoRAEEVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Subredes Publicas (Zona A y Zona B)
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EcoRAEEVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-public-subnet-a-${EnvironmentName}
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EcoRAEEVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-public-subnet-b-${EnvironmentName}
+
+  # Subredes Privadas para RDS PostgreSQL (Zona A y Zona B)
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EcoRAEEVPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-private-subnet-a-${EnvironmentName}
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EcoRAEEVPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-private-subnet-b-${EnvironmentName}
+
+  # Tablas de Enrutamiento Publico
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EcoRAEEVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-public-rt-${EnvironmentName}
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetRouteAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  # ==========================================================================
+  # 2. SEGURIDAD DE RED: SECURITY GROUPS EN CADENA
+  # ==========================================================================
+  BackendSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG para el backend de computo FastAPI en EC2
+      VpcId: !Ref EcoRAEEVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Entrada HTTP publica para API y documentacion
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Entrada HTTPS cifrada
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+          Description: Puerto nativo de desarrollo FastAPI / Swagger
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-backend-sg-${EnvironmentName}
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG para PostgreSQL en RDS - Aislamiento estricto
+      VpcId: !Ref EcoRAEEVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref BackendSecurityGroup
+          Description: Puerto PostgreSQL permitido UNICAMENTE desde el backend EC2
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-db-sg-${EnvironmentName}
+
+  # ==========================================================================
+  # 3. BASE DE DATOS RELACIONAL: AMAZON RDS POSTGRESQL (FREE TIER)
+  # ==========================================================================
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subredes privadas aisladas para RDS PostgreSQL
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-db-subnet-group-${EnvironmentName}
+
+  PostgreSQLRDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub ecoraee-relational-db-${EnvironmentName}
+      Engine: postgres
+      EngineVersion: '16.3'
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: '20'
+      StorageType: gp3
+      DBName: ecoraee_db
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+      Tags:
+        - Key: Name
+          Value: !Sub ecoraee-relational-db-${EnvironmentName}
+
+  # ==========================================================================
+  # 4. ALMACENAMIENTO DE OBJETOS: AMAZON S3 PARA EVIDENCIAS DIGITALES (RN-07)
+  # ==========================================================================
+  EvidenciasS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ecoraee-evidencias-storage-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: ecoraee-evidencias-storage
+        - Key: Project
+          Value: EcoRAEE-Cloud
+
+  # ==========================================================================
+  # 5. GOBIERNO IAM: SERVICE ROLE PARA INSTANCIA EC2
+  # ==========================================================================
+  EC2ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub EcoRAEE-EC2-ExecutionRole-${EnvironmentName}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: EcoRAEE-BackendAccess-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AllowS3EvidenciasReadWrite
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::${EvidenciasS3Bucket}/*
+              - Sid: AllowS3ListBucket
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub arn:aws:s3:::${EvidenciasS3Bucket}
+              - Sid: AllowCloudWatchLogsTelemetry
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 'arn:aws:logs:*:*:log-group:/aws/ecoraee/*'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2ExecutionRole
+
+Outputs:
+  VPCId:
+    Description: Identificador de la VPC de EcoRAEE
+    Value: !Ref EcoRAEEVPC
+  
+  RDSEndpoint:
+    Description: Endpoint de conexion a la base de datos PostgreSQL
+    Value: !GetAtt PostgreSQLRDSInstance.Endpoint.Address
+  
+  RDSPort:
+    Description: Puerto de PostgreSQL
+    Value: !GetAtt PostgreSQLRDSInstance.Endpoint.Port
+  
+  S3BucketName:
+    Description: Nombre del bucket privado de evidencias
+    Value: !Ref EvidenciasS3Bucket
