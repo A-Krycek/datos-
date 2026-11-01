@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph POOL["POOL: EcoRAEE Cloud — Arquitectura de Aplicaciones y Servicios Lógicos TO-BE (BPMN)"]
+        direction TB
+
+        subgraph L_SPA["1. Capa Cliente (Portal Web SPA)"]
+            SPA["<b>Portal Web Único EcoRAEE Cloud (Aplicación Web Responsiva SPA)</b><br/>Interfaz unificada con vistas por rol: Operador, Técnico, Gestor de Inventario, Logística y Administrador<br/>Consume endpoints REST sobre HTTPS con tokens JWT (Atiende P-02, P-04 / RA-04)"]
+        end
+
+        subgraph L_CORE["2. Módulos del Ciclo Operativo"]
+            direction LR
+            MOD02["<b>MOD-02 Módulo de Recepción,<br/>Lotes y Registro QR</b><br/>Soporta: CAP-01, CAP-08 / PRC-02<br/>Ficha QR e historial inicial (RN-01)"]
+            MOD03["<b>MOD-03 Módulo de Evaluación<br/>Técnica y Clasificación</b><br/>Soporta: CAP-02 / PRC-03<br/>Diagnóstico en 4 vías (RN-02)"]
+            MOD04["<b>MOD-04 Módulo de Gestión de<br/>Inventario y Bodega</b><br/>Soporta: CAP-03 / PRC-04<br/>Ubicación 1:1 y taller (RN-06)"]
+            MOD05["<b>MOD-05 Módulo de Transferencias<br/>Logísticas y Destino Final</b><br/>Soporta: CAP-05, CAP-07, CAP-08<br/>Regla ética y despacho (RN-04)"]
+            MOD02 --> MOD03 --> MOD04 --> MOD05
+        end
+
+        subgraph L_ENG["3. Módulos de Análisis y Cierre"]
+            MOD07["<b>MOD-07 Motor de Análisis de Capacidad y Flujo de Red</b><br/>Soporta: CAP-09 / PRC-06, PRC-07 | Información: OI-09 Red Logística y Flujo<br/>Ejecuta algoritmo Edmonds-Karp sobre G=(V,E,c), identifica corte mínimo y previene sobrecarga (RN-05)"]
+            MOD08["<b>MOD-08 Módulo de Trazabilidad, Auditoría y Reportes KPI</b><br/>Soporta: CAP-06, CAP-10 / PRC-01, PRC-07 | Información: OI-05, OI-10<br/>Registra historial inmutable (RN-06, RN-07), verifica cierre (RN-08) y publica dashboards en tiempo real"]
+            MOD07 -->|Métricas de flujo| MOD08
+        end
+
+        subgraph L_SRV["4. Servicios Transversales de Seguridad y S3"]
+            MOD01["<b>MOD-01 Módulo de Seguridad, Identidad y Control de Acceso (RBAC)</b><br/>Soporta: CAP-10 / PRC-01 | Información: OI-01 Actor y Perfil de Acceso<br/>Valida permisos en cada endpoint REST y garantiza autoría verificable de cada acción (RA-07)"]
+            MOD06["<b>MOD-06 Servicio de Gestión de Evidencias Digitales</b><br/>Soporta: CAP-04 / PRC-05 | Información: OI-07 Evidencia Digital y Documental<br/>Valida hash SHA-256, almacena archivos en Amazon S3 vía Rol IAM y vincula URIs en RDS (RN-03)"]
+        end
+
+        SPA -. Peticiones REST HTTPS / JWT .-> MOD02
+        MOD05 -. Consulta capacidad (RN-05) .-> MOD07
+        MOD01 -. Autoriza peticiones RBAC .-> MOD07
+        MOD06 -. Provee URIs de evidencia S3 .-> MOD08
+    end
+
+    classDef spa fill:#f2f7fd,stroke:#1e4e79,stroke-width:1.5px,color:#000;
+    classDef core fill:#f0f9f2,stroke:#1e5631,stroke-width:1.5px,color:#000;
+    classDef eng fill:#f6f2fa,stroke:#6a3d9a,stroke-width:1.5px,color:#000;
+    classDef sec fill:#e8f8f0,stroke:#0f5132,stroke-width:1.5px,color:#000;
+    classDef s3 fill:#fffaf0,stroke:#8a5a00,stroke-width:1.5px,color:#000;
+
+    class SPA spa;
+    class MOD02,MOD03,MOD04,MOD05 core;
+    class MOD07,MOD08 eng;
+    class MOD01 sec;
+    class MOD06 s3;

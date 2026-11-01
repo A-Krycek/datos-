@@ -1,0 +1,80 @@
+flowchart TB
+    subgraph POOL["POOL: UIDA — Proceso Principal TO-BE de Gestión y Trazabilidad en EcoRAEE Cloud (BPMN 2.0)"]
+        direction TB
+
+        subgraph LANE1["1. Generador / Donante RAEE"]
+            S((Inicio:<br/>RAEE disponible)) --> A1["1. Registrar solicitud o entrega de RAEE<br/>(Procedencia y contacto institucional)"]
+        end
+
+        subgraph LANE2["2. Operador de Centro de Acopio"]
+            A2["2. Recibir lote físico y verificar procedencia<br/>(Inspección física en centro de acopio)"]
+            A3["3. Asignar código QR único e iniciar historial<br/>(Estado: REGISTRADO / Regla RN-01)"]
+            A4["4. Capturar evidencia fotográfica inicial<br/>(Almacenamiento S3 / Principio PA-03)"]
+            D_ACTA[/"Acta QR y Foto Inicial<br/>[OI-02 / OI-03]"/]
+        end
+
+        subgraph LANE3["3. Técnico Evaluador Autorizado"]
+            A5["5. Diagnosticar equipo y registrar evaluación<br/>(Rol Técnico Autorizado / Regla RN-02)"]
+            G1{"G1: ¿Clasificación<br/>técnica?"}
+            A6["6. Ejecutar orden de taller y reacondicionamiento<br/>(Pruebas de hardware y piezas)"]
+            A7["7. Vincular informe técnico y evidencia digital<br/>(Estado: EVALUADO / Principio PA-04)"]
+        end
+
+        subgraph LANE4["4. Gestor de Inventario y Bodega"]
+            A8["8. Actualizar inventario y estado atómicamente<br/>(Transacción ACID en Amazon RDS / Regla RN-06)"]
+            A9["9. Asignar ubicación física en estantería<br/>(Exclusión 1:1 en stock de bodega)"]
+            DS_RDS[("BD Transaccional RDS<br/>PostgreSQL [OI-05]")]
+        end
+
+        subgraph LANE5["5. Coordinador Logístico y Destino Final"]
+            A10["10. Calcular flujo máximo y capacidad de red<br/>(Algoritmo Edmonds-Karp / Regla RN-05)"]
+            G2{"G2: ¿Capacidad en<br/>arista (RN-05)?"}
+            G3{"G3: ¿Regla ética de<br/>destino (RN-04)?"}
+            A11["11. Reprogramar lote o balancear ruta / destino<br/>(Ajuste preventivo ante saturación)"]
+            A12["12. Emitir manifiesto y despachar transferencia<br/>(Reúso social vs. Gestor ambiental RAEE)"]
+            A13["13. Confirmar recepción y subir certificado<br/>(Acta firmada en Amazon S3 / Regla RN-03)"]
+            A14["14. Cerrar trazabilidad y consolidar KPIs<br/>(TRAZABILIDAD_CERRADA / Regla RN-08)"]
+            E(((Fin: Caso cerrado<br/>y auditado)))
+        end
+
+        A1 --> A2
+        A2 --> A3
+        A3 --> A4
+        A4 -. Documenta .-> D_ACTA
+        A4 --> A5
+        A5 --> G1
+        G1 -- Reparable --> A6
+        G1 -- Reutilizable / Reciclable / No recuperable --> A7
+        A6 --> A7
+        A7 --> A8
+        A8 -. Transacción ACID .-> DS_RDS
+        A8 --> A9
+        A9 --> A10
+        A10 --> G2
+        G2 -- No (Saturada) --> A11
+        A11 --> A10
+        G2 -- Sí --> G3
+        G3 -- No --> A11
+        G3 -- Sí (Válido) --> A12
+        A12 --> A13
+        A13 --> A14
+        A14 --> E
+    end
+
+    classDef userTask fill:#f2f7fd,stroke:#1e4e79,stroke-width:1.6px,color:#000;
+    classDef servTask fill:#f0f9f2,stroke:#1e5631,stroke-width:1.6px,color:#000;
+    classDef ruleTask fill:#f6f2fa,stroke:#6a3d9a,stroke-width:1.6px,color:#000;
+    classDef gate fill:#fff8dc,stroke:#9a6700,stroke-width:2px,color:#000;
+    classDef data fill:#fffaf0,stroke:#8a5a00,stroke-width:1.5px,color:#000;
+    classDef store fill:#eef3f8,stroke:#1b365d,stroke-width:1.5px,color:#000;
+    classDef evt fill:#e6f7ec,stroke:#1e7e34,stroke-width:2.5px,color:#000;
+    classDef endevt fill:#fdeaea,stroke:#b02a37,stroke-width:4px,color:#000;
+
+    class A1,A2,A4,A5,A6,A7,A9,A11,A12,A13 userTask;
+    class A3,A8,A14 servTask;
+    class A10 ruleTask;
+    class G1,G2,G3 gate;
+    class D_ACTA data;
+    class DS_RDS store;
+    class S evt;
+    class E endevt;

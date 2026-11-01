@@ -1,0 +1,47 @@
+flowchart TB
+    subgraph POOL["POOL: UIDA — Arquitectura de Información TO-BE (Objetos de Datos y Almacenes BPMN)"]
+        direction TB
+
+        subgraph L_REG["1. Captura y Registro Inicial"]
+            OI01["<b>OI-01 Actor y Perfil de Acceso</b><br/>Productor: Administrador RAEE | Consumidor: Todos los módulos<br/>Datos: Generador, operador, técnico, logística, receptor, admin.<br/>Control: Rol activo único y autorización RBAC (CAP-10)"]
+            OI02["<b>OI-02 Solicitud y Lote de Entrega</b><br/>Productor: Generador / Operador | Consumidor: Acopio<br/>Datos: Fecha/hora, procedencia, cantidad de ítems y acta<br/>Control: Captura única en origen (PA-03)"]
+            OI03["<b>OI-03 Dispositivo RAEE (Ficha Maestra QR)</b><br/>Productor: Operador de Acopio | Consumidor: Todos los roles<br/>Datos: Código QR único, serie, categoría, marca, estado actual<br/>Control: Identificación única obligatoria (RN-01 / PA-01)"]
+            OI01 -->|Registra| OI02
+            OI02 -->|Desglosa en| OI03
+        end
+
+        subgraph L_EVA["2. Evaluación, Taller y Bodega"]
+            OI04["<b>OI-04 Evaluación Técnica y Clasificación</b><br/>Productor: Técnico Evaluador | Consumidor: Inventario / Logística<br/>Datos: Diagnóstico funcional, condición y clasificación (4 vías)<br/>Control: Restringido a rol técnico autorizado (RN-02)"]
+            OI06["<b>OI-06 Inventario y Ubicación en Bodega</b><br/>Productor: Gestor Inventario / Técnico | Consumidor: Logística<br/>Datos: Estantería/contenedor activo, diagnóstico y piezas de taller<br/>Control: Exclusión mutua 1:1 de ubicación activa (RN-06)"]
+            OI07["<b>OI-07 Evidencia Digital y Documental</b><br/>Productor: Operador / Técnico / Logística | Consumidor: Auditoría<br/>Datos: URI segura S3, hash SHA-256, tipo MIME y etapa<br/>Control: Obligatoria en ingreso, evaluación y despacho (RN-03)"]
+            OI03 -->|Evalúa| OI04
+            OI04 -->|Habilita stock/taller| OI06
+            OI06 -->|Respalda con URI| OI07
+        end
+
+        subgraph L_LOG["3. Red Logística y Cierre Final"]
+            OI09["<b>OI-09 Red Logística y Resultado de Flujo</b><br/>Productor: Admin / Motor de Red | Consumidor: Coord. Logístico<br/>Datos: Nodos V, aristas E, capacidad c(u,v), flujo máx. y corte mín.<br/>Control: No negatividad y restricción de capacidad (RN-05)"]
+            OI08["<b>OI-08 Movimiento y Manifiesto de Transferencia</b><br/>Productor: Coordinador Logístico | Consumidor: Destinatario / Admin<br/>Datos: Ruta origen-destino, custodio, manifiesto y estado de envío<br/>Control: Validación de compatibilidad ética (RN-04)"]
+            OI10["<b>OI-10 Destino Final e Indicadores Ejecutivos (KPIs)</b><br/>Productor: Coord. Logístico / Sistema | Consumidor: Dirección UIDA<br/>Datos: Acta de cierre verificable, métricas de reúso y reciclaje<br/>Control: Requisitos completos para cierre (RN-08)"]
+            OI06 -->|Alimenta rutas| OI08
+            OI09 -->|Valida capacidad| OI08
+            OI08 -->|Formaliza cierre| OI10
+        end
+
+        subgraph L_STO["4. Persistencia y Auditoría Central"]
+            OI05[("<b>OI-05 Historial Inmutable de Estados [Amazon RDS PostgreSQL]</b><br/>Productor: Motor Transaccional ACID | Consumidor: Auditoría y Trazabilidad<br/>Datos: Estado anterior, estado nuevo, timestamp, usuario y motivo<br/>Control: Registro append-only inmutable en la misma transacción (RN-06, RN-07)")]
+            S3_BIN[("<b>Repositorio Central de Evidencias [Amazon S3 Privado]</b><br/>Productor: Servicio de Evidencias (MOD-06) | Consumidor: Auditoría<br/>Datos: Fotos de ingreso/evaluación, actas y certificados firmados<br/>Control: Cifrado SSE-S3 y descarga mediante URLs prefirmadas")]
+        end
+
+        OI03 -. Eventos de estado .-> OI05
+        OI04 -. Eventos de estado .-> OI05
+        OI06 -. Transacción ACID .-> OI05
+        OI08 -. Despacho y cierre .-> OI05
+        OI07 -. Almacena binarios .-> S3_BIN
+    end
+
+    classDef dataObj fill:#fffaf0,stroke:#8a5a00,stroke-width:1.5px,color:#000;
+    classDef storeObj fill:#eef3f8,stroke:#1b365d,stroke-width:1.8px,color:#000;
+
+    class OI01,OI02,OI03,OI04,OI06,OI07,OI08,OI09,OI10 dataObj;
+    class OI05,S3_BIN storeObj;

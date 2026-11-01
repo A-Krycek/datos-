@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph POOL["POOL: UIDA — Vista Integrada TO-BE (3 Cadenas Transversales Actor -> Proceso -> Capacidad -> Información -> Aplicación -> Tecnología)"]
+        direction LR
+
+        subgraph C1["CADENA 1: RECEPCIÓN Y REGISTRO QR EN ORIGEN"]
+            direction TB
+            C1_A["<b>Actor:</b> Operador de Centro de Acopio<br/>Interactúa con Unidad Generadora / Donante"]
+            C1_P["<b>Proceso:</b> PRC-02 Recepción y Registro de Ingreso<br/>Actividades BPMN A1 a A4 (registro en origen)"]
+            C1_C["<b>Capacidad:</b> CAP-01 Recepción y Registro de Ingreso<br/>Apoyada por CAP-08 Coordinación con Generadores"]
+            C1_I["<b>Información:</b> OI-02 Solicitud Lote + OI-03 Dispositivo QR<br/>Inicia historial inmutable en OI-05 (RN-01 / RA-01)"]
+            C1_M["<b>Aplicación:</b> MOD-02 Recepción, Lotes y Registro QR<br/>Integrado con MOD-04 Gestión de Inventario y Bodega"]
+            C1_T["<b>Tecnología:</b> TEC-01 Frontend S3 + TEC-03 ALB/EC2<br/>Persistencia atómica en TEC-04 RDS (en TEC-02 VPC)"]
+            C1_A --> C1_P --> C1_C --> C1_I --> C1_M --> C1_T
+        end
+
+        subgraph C2["CADENA 2: EVALUACIÓN TÉCNICA Y EVIDENCIA VINCULADA"]
+            direction TB
+            C2_A["<b>Actor:</b> Técnico Evaluador Autorizado<br/>Personal del laboratorio / taller UIDA"]
+            C2_P["<b>Proceso:</b> PRC-03 Evaluación Técnica y Clasificación<br/>Vinculado con PRC-05 Gestión de Evidencias (A5-A7, G1)"]
+            C2_C["<b>Capacidad:</b> CAP-02 Evaluación Técnica y Clasificación<br/>Integrada con CAP-04 Gestión de Evidencias Digitales"]
+            C2_I["<b>Información:</b> OI-04 Evaluación Técnica + OI-07 Evidencia S3<br/>Actualiza OI-06 Ubicación y OI-05 Historial (RN-02, RN-03)"]
+            C2_M["<b>Aplicación:</b> MOD-03 Evaluación Técnica + MOD-06 Evidencias<br/>Protegidos por MOD-01 Seguridad y Control RBAC"]
+            C2_T["<b>Tecnología:</b> TEC-03 Backend EC2 + TEC-06 Rol IAM<br/>Almacena binarios en TEC-05 S3 y metadatos en TEC-04 RDS"]
+            C2_A --> C2_P --> C2_C --> C2_I --> C2_M --> C2_T
+        end
+
+        subgraph C3["CADENA 3: OPTIMIZACIÓN DE RED, TRANSFERENCIA Y CIERRE"]
+            direction TB
+            C3_A["<b>Actor:</b> Coordinador Logístico y Administrador RAEE<br/>Interactúa con Gestor Ambiental y Beneficiario"]
+            C3_P["<b>Proceso:</b> PRC-06 Distribución, Transferencia y Cierre<br/>Articulado con PRC-07 Consolidación KPI (A10-A14, G2-G3)"]
+            C3_C["<b>Capacidad:</b> CAP-05 Logística + CAP-07 Cierre de Caso<br/>Potenciadas por CAP-09 Análisis de Flujo de Red"]
+            C3_I["<b>Información:</b> OI-09 Red Logística + OI-08 Manifiesto<br/>Consolida OI-10 Destino Final e Indicadores (RN-04, RN-05, RN-08)"]
+            C3_M["<b>Aplicación:</b> MOD-07 Motor de Flujo + MOD-05 Transferencias<br/>Sincronizados con MOD-08 Trazabilidad, Auditoría y KPI"]
+            C3_T["<b>Tecnología:</b> TEC-03 EC2 + TEC-04 RDS + TEC-05 S3<br/>Monitoreados continuamente por TEC-07 CloudWatch"]
+            C3_A --> C3_P --> C3_C --> C3_I --> C3_M --> C3_T
+        end
+    end
+
+    classDef c1Style fill:#f2f7fd,stroke:#1e4e79,stroke-width:1.4px,color:#000;
+    classDef c2Style fill:#f0f9f2,stroke:#1e5631,stroke-width:1.4px,color:#000;
+    classDef c3Style fill:#f6f2fa,stroke:#6a3d9a,stroke-width:1.4px,color:#000;
+
+    class C1_A,C1_P,C1_C,C1_I,C1_M,C1_T c1Style;
+    class C2_A,C2_P,C2_C,C2_I,C2_M,C2_T c2Style;
+    class C3_A,C3_P,C3_C,C3_I,C3_M,C3_T c3Style;

@@ -1,0 +1,27 @@
+===========================================================================
+PROYECTO INTEGRADOR: EcoRAEE Cloud (Quinto Semestre - Semana 10)
+ASIGNATURA: Arquitectura Empresarial e Industrial (05-SIN-A)
+ENTREGABLE: AEI-02 - Arquitectura Empresarial TO-BE y Análisis de Brechas
+ORGANIZACIÓN CASO DE ESTUDIO: Universidad Internacional de América (UIDA)
+EQUIPO: Daniel Pazmiño, Matías Herrera, Ihair Llamuca
+DOCENTE: Ing. Iván Galo Reyes Chacón
+===========================================================================
+
+CONTENIDO DEL PAQUETE DE DIAGRAMAS EDITABLES (.ZIP):
+
+1. Fuentes Editables (Mermaid y BPMN 2.0 XML):
+   - D1_Mapa_Capacidades_TO-BE.mmd       : Mapa jerárquico de capacidades TO-BE (10 capacidades en 2 niveles: CAP-01 a CAP-10). Editable en Mermaid Live Editor / VS Code / Draw.io.
+   - D2_Proceso_Principal_TO-BE.bpmn     : Modelo estándar BPMN 2.0 XML con diagramación de carriles (5 participantes, 14 actividades y 3 compuertas XOR). Editable en Camunda Modeler, Bizagi, bpmn.io o Draw.io.
+   - D2_Proceso_Principal_TO-BE.mmd      : Equivalente editable en código Mermaid del flujo del proceso principal TO-BE.
+   - D3_Arquitectura_Informacion_TO-BE.mmd : Modelo conceptual de objetos de información TO-BE (10 objetos OI-01 a OI-10 y sus relaciones). Editable en Mermaid.
+   - D4_Arquitectura_Aplicaciones_TO-BE.mmd : Vista lógica modular de aplicaciones TO-BE (Portal Web SPA y 8 módulos lógicos MOD-01 a MOD-08). Editable en Mermaid.
+   - D5_Arquitectura_Tecnologica_TO-BE.mmd  : Vista de arquitectura tecnológica cloud en AWS (7 componentes TEC-01 a TEC-07). Editable en Mermaid.
+   - D6_Vista_Integrada_TO-BE.mmd        : Vista transversal integrada con 3 cadenas de extremo a extremo (Actor -> Proceso -> Capacidad -> Información -> Aplicación -> Tecnología). Editable en Mermaid.
+
+2. Imágenes Renderizadas en Alta Resolución (.PNG):
+   - D1_Mapa_Capacidades_TO-BE.png
+   - D2_Proceso_Principal_TO-BE.png
+   - D3_Arquitectura_Informacion_TO-BE.png
+   - D4_Arquitectura_Aplicaciones_TO-BE.png
+   - D5_Arquitectura_Tecnologica_TO-BE.png
+   - D6_Vista_Integrada_TO-BE.png

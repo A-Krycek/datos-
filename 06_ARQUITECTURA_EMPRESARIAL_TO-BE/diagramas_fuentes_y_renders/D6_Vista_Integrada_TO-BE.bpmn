@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_Process_D6_Integrada"
+                  targetNamespace="http://uide.edu.ec/ecoraee/bpmn">
+  <bpmn:collaboration id="Collab_Process_D6_Integrada">
+    <bpmn:participant id="Participant_Pool" name="Vista Integrada TO-BE - Cadenas Transversales Actor a Tecnologia" processRef="Process_D6_Integrada" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_D6_Integrada" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_D6_Integrada">
+      <bpmn:lane id="Lane_Act" name="1. Actor Organizacional">
+        <bpmn:flowNodeRef>C1_ACT</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C2_ACT</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C3_ACT</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Prc" name="2. Proceso de Negocio BPMN">
+        <bpmn:flowNodeRef>C1_PRC</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C2_PRC</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C3_PRC</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Cap" name="3. Capacidad Organizacional">
+        <bpmn:flowNodeRef>C1_CAP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C2_CAP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C3_CAP</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Inf" name="4. Objeto de Informacion">
+        <bpmn:flowNodeRef>C1_INF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C2_INF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C3_INF</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_App" name="5. Modulo de Aplicacion">
+        <bpmn:flowNodeRef>C1_APP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C2_APP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C3_APP</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Tec" name="6. Componente Tecnologico Cloud">
+        <bpmn:flowNodeRef>C1_TEC</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C2_TEC</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>C3_TEC</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:userTask id="C1_ACT" name="C1 Actor: Operador Centro de Acopio" />
+    <bpmn:userTask id="C1_PRC" name="C1 Proceso: PRC-02 Recepcion y Registro de Ingreso" />
+    <bpmn:serviceTask id="C1_CAP" name="C1 Capacidad: CAP-01 y CAP-08" />
+    <bpmn:task id="C1_INF" name="C1 Informacion: OI-02, OI-03 y OI-05" />
+    <bpmn:serviceTask id="C1_APP" name="C1 Aplicacion: MOD-02 y MOD-04" />
+    <bpmn:serviceTask id="C1_TEC" name="C1 Tecnologia: TEC-01 S3 Web + TEC-03 ALB/EC2 + TEC-04 RDS" />
+    <bpmn:userTask id="C2_ACT" name="C2 Actor: Tecnico Evaluador Autorizado" />
+    <bpmn:userTask id="C2_PRC" name="C2 Proceso: PRC-03 Evaluacion y PRC-05 Evidencias" />
+    <bpmn:serviceTask id="C2_CAP" name="C2 Capacidad: CAP-02 y CAP-04" />
+    <bpmn:task id="C2_INF" name="C2 Informacion: OI-04 y OI-07 Evidencia S3" />
+    <bpmn:serviceTask id="C2_APP" name="C2 Aplicacion: MOD-03, MOD-06 y MOD-01 RBAC" />
+    <bpmn:serviceTask id="C2_TEC" name="C2 Tecnologia: TEC-03 EC2 + TEC-06 IAM + TEC-05 S3" />
+    <bpmn:userTask id="C3_ACT" name="C3 Actor: Coordinador Logistico / Admin RAEE" />
+    <bpmn:userTask id="C3_PRC" name="C3 Proceso: PRC-06 Transferencia/Cierre y PRC-07 KPI" />
+    <bpmn:businessRuleTask id="C3_CAP" name="C3 Capacidad: CAP-05, CAP-07, CAP-09 y CAP-06" />
+    <bpmn:task id="C3_INF" name="C3 Informacion: OI-08, OI-09 y OI-10" />
+    <bpmn:businessRuleTask id="C3_APP" name="C3 Aplicacion: MOD-07 Flujo, MOD-05 y MOD-08 KPI" />
+    <bpmn:serviceTask id="C3_TEC" name="C3 Tecnologia: TEC-03 EC2 + TEC-04 RDS + TEC-07 CloudWatch" />
+    <bpmn:sequenceFlow id="F_C1_1" sourceRef="C1_ACT" targetRef="C1_PRC" />
+    <bpmn:sequenceFlow id="F_C1_2" sourceRef="C1_PRC" targetRef="C1_CAP" />
+    <bpmn:sequenceFlow id="F_C1_3" sourceRef="C1_CAP" targetRef="C1_INF" />
+    <bpmn:sequenceFlow id="F_C1_4" sourceRef="C1_INF" targetRef="C1_APP" />
+    <bpmn:sequenceFlow id="F_C1_5" sourceRef="C1_APP" targetRef="C1_TEC" />
+    <bpmn:sequenceFlow id="F_C2_1" sourceRef="C2_ACT" targetRef="C2_PRC" />
+    <bpmn:sequenceFlow id="F_C2_2" sourceRef="C2_PRC" targetRef="C2_CAP" />
+    <bpmn:sequenceFlow id="F_C2_3" sourceRef="C2_CAP" targetRef="C2_INF" />
+    <bpmn:sequenceFlow id="F_C2_4" sourceRef="C2_INF" targetRef="C2_APP" />
+    <bpmn:sequenceFlow id="F_C2_5" sourceRef="C2_APP" targetRef="C2_TEC" />
+    <bpmn:sequenceFlow id="F_C3_1" sourceRef="C3_ACT" targetRef="C3_PRC" />
+    <bpmn:sequenceFlow id="F_C3_2" sourceRef="C3_PRC" targetRef="C3_CAP" />
+    <bpmn:sequenceFlow id="F_C3_3" sourceRef="C3_CAP" targetRef="C3_INF" />
+    <bpmn:sequenceFlow id="F_C3_4" sourceRef="C3_INF" targetRef="C3_APP" />
+    <bpmn:sequenceFlow id="F_C3_5" sourceRef="C3_APP" targetRef="C3_TEC" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Process_D6_Integrada">
+    <bpmndi:BPMNPlane id="BPMNPlane_Process_D6_Integrada" bpmnElement="Collab_Process_D6_Integrada">
+      <bpmndi:BPMNShape id="Participant_Pool_di" bpmnElement="Participant_Pool" isHorizontal="true">
+        <dc:Bounds x="20" y="20" width="1750" height="980" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Act_di" bpmnElement="Lane_Act" isHorizontal="true">
+        <dc:Bounds x="50" y="20" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Prc_di" bpmnElement="Lane_Prc" isHorizontal="true">
+        <dc:Bounds x="50" y="180" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Cap_di" bpmnElement="Lane_Cap" isHorizontal="true">
+        <dc:Bounds x="50" y="340" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Inf_di" bpmnElement="Lane_Inf" isHorizontal="true">
+        <dc:Bounds x="50" y="500" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_App_di" bpmnElement="Lane_App" isHorizontal="true">
+        <dc:Bounds x="50" y="660" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Tec_di" bpmnElement="Lane_Tec" isHorizontal="true">
+        <dc:Bounds x="50" y="820" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C1_ACT_di" bpmnElement="C1_ACT">
+        <dc:Bounds x="140" y="55" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C1_PRC_di" bpmnElement="C1_PRC">
+        <dc:Bounds x="140" y="215" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C1_CAP_di" bpmnElement="C1_CAP">
+        <dc:Bounds x="140" y="375" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C1_INF_di" bpmnElement="C1_INF">
+        <dc:Bounds x="140" y="535" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C1_APP_di" bpmnElement="C1_APP">
+        <dc:Bounds x="140" y="695" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C1_TEC_di" bpmnElement="C1_TEC">
+        <dc:Bounds x="140" y="855" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C2_ACT_di" bpmnElement="C2_ACT">
+        <dc:Bounds x="580" y="55" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C2_PRC_di" bpmnElement="C2_PRC">
+        <dc:Bounds x="580" y="215" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C2_CAP_di" bpmnElement="C2_CAP">
+        <dc:Bounds x="580" y="375" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C2_INF_di" bpmnElement="C2_INF">
+        <dc:Bounds x="580" y="535" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C2_APP_di" bpmnElement="C2_APP">
+        <dc:Bounds x="580" y="695" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C2_TEC_di" bpmnElement="C2_TEC">
+        <dc:Bounds x="580" y="855" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C3_ACT_di" bpmnElement="C3_ACT">
+        <dc:Bounds x="1020" y="55" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C3_PRC_di" bpmnElement="C3_PRC">
+        <dc:Bounds x="1020" y="215" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C3_CAP_di" bpmnElement="C3_CAP">
+        <dc:Bounds x="1020" y="375" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C3_INF_di" bpmnElement="C3_INF">
+        <dc:Bounds x="1020" y="535" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C3_APP_di" bpmnElement="C3_APP">
+        <dc:Bounds x="1020" y="695" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C3_TEC_di" bpmnElement="C3_TEC">
+        <dc:Bounds x="1020" y="855" width="320" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F_C1_1_di" bpmnElement="F_C1_1">
+        <di:waypoint x="300" y="145" />
+        <di:waypoint x="300" y="215" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C1_2_di" bpmnElement="F_C1_2">
+        <di:waypoint x="300" y="305" />
+        <di:waypoint x="300" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C1_3_di" bpmnElement="F_C1_3">
+        <di:waypoint x="300" y="465" />
+        <di:waypoint x="300" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C1_4_di" bpmnElement="F_C1_4">
+        <di:waypoint x="300" y="625" />
+        <di:waypoint x="300" y="695" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C1_5_di" bpmnElement="F_C1_5">
+        <di:waypoint x="300" y="785" />
+        <di:waypoint x="300" y="855" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C2_1_di" bpmnElement="F_C2_1">
+        <di:waypoint x="740" y="145" />
+        <di:waypoint x="740" y="215" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C2_2_di" bpmnElement="F_C2_2">
+        <di:waypoint x="740" y="305" />
+        <di:waypoint x="740" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C2_3_di" bpmnElement="F_C2_3">
+        <di:waypoint x="740" y="465" />
+        <di:waypoint x="740" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C2_4_di" bpmnElement="F_C2_4">
+        <di:waypoint x="740" y="625" />
+        <di:waypoint x="740" y="695" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C2_5_di" bpmnElement="F_C2_5">
+        <di:waypoint x="740" y="785" />
+        <di:waypoint x="740" y="855" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C3_1_di" bpmnElement="F_C3_1">
+        <di:waypoint x="1180" y="145" />
+        <di:waypoint x="1180" y="215" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C3_2_di" bpmnElement="F_C3_2">
+        <di:waypoint x="1180" y="305" />
+        <di:waypoint x="1180" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C3_3_di" bpmnElement="F_C3_3">
+        <di:waypoint x="1180" y="465" />
+        <di:waypoint x="1180" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C3_4_di" bpmnElement="F_C3_4">
+        <di:waypoint x="1180" y="625" />
+        <di:waypoint x="1180" y="695" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C3_5_di" bpmnElement="F_C3_5">
+        <di:waypoint x="1180" y="785" />
+        <di:waypoint x="1180" y="855" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

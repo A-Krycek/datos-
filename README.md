@@ -27,6 +27,10 @@ Plataforma Cloud de Gestión, Trazabilidad y Optimización de RAEE (Residuos de 
 
 ---
 
+* **`06_ARQUITECTURA_EMPRESARIAL_TO-BE/`**:
+  * Documento oficial de entrega: `Grupo_Pazmino_Herrera_Llamuca_AEI02_EcoRAEE_TO-BE.docx` (AEI-02 para Ing. Iván Galo Reyes Chacón).
+  * `diagramas_fuentes_y_renders/`: Diagramas editables BPMN 2.0 XML, Mermaid (.mmd) y renders en alta resolución (.png) para las 6 vistas arquitectónicas (D1 a D6: Capacidades, Procesos, Información, Aplicaciones, Tecnología y Vista Integrada).
+
 ## 🚀 Puesta en Marcha Rápida (Base de Datos)
 1. Abrir **SQL Server Management Studio (SSMS)** o **Azure Data Studio**.
 2. Ejecutar `01_ENTREGA_FASE2_SQL_SERVER/01_DDL.sql` para crear la base de datos `BD_ECORAEE_CLOUD` y las 30 tablas con sus restricciones.

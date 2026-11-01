@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_EcoRAEE_TOBE"
+                  targetNamespace="http://uide.edu.ec/schema/bpmn/ecoraee">
+  <bpmn:collaboration id="Collaboration_EcoRAEE">
+    <bpmn:participant id="Participant_UIDA" name="UIDA - Proceso Principal TO-BE de Gestión y Trazabilidad en EcoRAEE Cloud" processRef="Process_EcoRAEE_TOBE" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_EcoRAEE_TOBE" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Generador" name="1. Generador / Comunidad Universitaria">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_01_Solicitud</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Operador" name="2. Operador de Centro de Acopio">
+        <bpmn:flowNodeRef>Task_02_Recepcion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_03_RegistroQR</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_04_EvidenciaIngreso</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Tecnico" name="3. Técnico Evaluador">
+        <bpmn:flowNodeRef>Task_05_Diagnostico</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_01_Clasificacion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_06_Reacondicionar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_07_EvidenciaTecnica</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Inventario" name="4. Gestor de Inventario">
+        <bpmn:flowNodeRef>Task_08_StockAtomico</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_09_AsignarUbicacion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Logistica" name="5. Coordinador Logístico y Destino Final">
+        <bpmn:flowNodeRef>Task_10_AnalizarFlujo</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_02_Capacidad</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_11_AjustarRuta</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_03_ValidarDestino</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_12_Despachar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_13_ConfirmarActa</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_14_CerrarTrazabilidad</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_1</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_1" name="Solicitud o entrega de RAEE" />
+    <bpmn:userTask id="Task_01_Solicitud" name="1. Registrar entrega o solicitud de recolección" />
+    <bpmn:userTask id="Task_02_Recepcion" name="2. Verificar lote físico y procedencia" />
+    <bpmn:userTask id="Task_03_RegistroQR" name="3. Generar etiqueta QR única e iniciar historial (RN-01)" />
+    <bpmn:userTask id="Task_04_EvidenciaIngreso" name="4. Capturar evidencia fotográfica inicial en origen (PA-03)" />
+    <bpmn:userTask id="Task_05_Diagnostico" name="5. Ejecutar diagnóstico y registrar evaluación (RN-02)" />
+    <bpmn:exclusiveGateway id="Gateway_01_Clasificacion" name="¿Clasificación técnica?" />
+    <bpmn:userTask id="Task_06_Reacondicionar" name="6. Ejecutar orden de reparación o reacondicionamiento" />
+    <bpmn:userTask id="Task_07_EvidenciaTecnica" name="7. Vincular informe y evidencia técnica al activo (PA-04)" />
+    <bpmn:serviceTask id="Task_08_StockAtomico" name="8. Actualizar inventario y estado atómicamente (RN-06)" />
+    <bpmn:userTask id="Task_09_AsignarUbicacion" name="9. Asignar ubicación física en estantería de bodega" />
+    <bpmn:serviceTask id="Task_10_AnalizarFlujo" name="10. Ejecutar análisis de flujo máximo y corte mínimo" />
+    <bpmn:exclusiveGateway id="Gateway_02_Capacidad" name="¿Capacidad disponible en arista (RN-05)?" />
+    <bpmn:userTask id="Task_11_AjustarRuta" name="11. Reprogramar envío o seleccionar ruta alterna" />
+    <bpmn:exclusiveGateway id="Gateway_03_ValidarDestino" name="¿Cumple restricción ética de destino (RN-04)?" />
+    <bpmn:userTask id="Task_12_Despachar" name="12. Emitir manifiesto digital y despachar a destino" />
+    <bpmn:userTask id="Task_13_ConfirmarActa" name="13. Confirmar recepción y adjuntar certificado/acta (RN-03)" />
+    <bpmn:serviceTask id="Task_14_CerrarTrazabilidad" name="14. Cerrar trazabilidad (RN-08) y consolidar KPIs" />
+    <bpmn:endEvent id="EndEvent_1" name="Trazabilidad cerrada y auditada" />
+
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="StartEvent_1" targetRef="Task_01_Solicitud" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Task_01_Solicitud" targetRef="Task_02_Recepcion" />
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="Task_02_Recepcion" targetRef="Task_03_RegistroQR" />
+    <bpmn:sequenceFlow id="Flow_04" sourceRef="Task_03_RegistroQR" targetRef="Task_04_EvidenciaIngreso" />
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Task_04_EvidenciaIngreso" targetRef="Task_05_Diagnostico" />
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Task_05_Diagnostico" targetRef="Gateway_01_Clasificacion" />
+    <bpmn:sequenceFlow id="Flow_07_Reparable" name="Reparable" sourceRef="Gateway_01_Clasificacion" targetRef="Task_06_Reacondicionar" />
+    <bpmn:sequenceFlow id="Flow_07_Otros" name="Reutilizable / Reciclable / No recup." sourceRef="Gateway_01_Clasificacion" targetRef="Task_07_EvidenciaTecnica" />
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="Task_06_Reacondicionar" targetRef="Task_07_EvidenciaTecnica" />
+    <bpmn:sequenceFlow id="Flow_09" sourceRef="Task_07_EvidenciaTecnica" targetRef="Task_08_StockAtomico" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_08_StockAtomico" targetRef="Task_09_AsignarUbicacion" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Task_09_AsignarUbicacion" targetRef="Task_10_AnalizarFlujo" />
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="Task_10_AnalizarFlujo" targetRef="Gateway_02_Capacidad" />
+    <bpmn:sequenceFlow id="Flow_13_No" name="No (Saturada)" sourceRef="Gateway_02_Capacidad" targetRef="Task_11_AjustarRuta" />
+    <bpmn:sequenceFlow id="Flow_14_Loop" sourceRef="Task_11_AjustarRuta" targetRef="Task_10_AnalizarFlujo" />
+    <bpmn:sequenceFlow id="Flow_13_Si" name="Sí" sourceRef="Gateway_02_Capacidad" targetRef="Gateway_03_ValidarDestino" />
+    <bpmn:sequenceFlow id="Flow_15_No" name="No (reasignar destino)" sourceRef="Gateway_03_ValidarDestino" targetRef="Task_11_AjustarRuta" />
+    <bpmn:sequenceFlow id="Flow_15" name="Validado (RN-04)" sourceRef="Gateway_03_ValidarDestino" targetRef="Task_12_Despachar" />
+    <bpmn:sequenceFlow id="Flow_16" sourceRef="Task_12_Despachar" targetRef="Task_13_ConfirmarActa" />
+    <bpmn:sequenceFlow id="Flow_17" sourceRef="Task_13_ConfirmarActa" targetRef="Task_14_CerrarTrazabilidad" />
+    <bpmn:sequenceFlow id="Flow_18" sourceRef="Task_14_CerrarTrazabilidad" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_EcoRAEE">
+      <bpmndi:BPMNShape id="Participant_UIDA_di" bpmnElement="Participant_UIDA" isHorizontal="true">
+        <dc:Bounds x="20" y="20" width="1640" height="750" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Generador_di" bpmnElement="Lane_Generador" isHorizontal="true">
+        <dc:Bounds x="50" y="20" width="1610" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Operador_di" bpmnElement="Lane_Operador" isHorizontal="true">
+        <dc:Bounds x="50" y="140" width="1610" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Tecnico_di" bpmnElement="Lane_Tecnico" isHorizontal="true">
+        <dc:Bounds x="50" y="270" width="1610" height="170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Inventario_di" bpmnElement="Lane_Inventario" isHorizontal="true">
+        <dc:Bounds x="50" y="440" width="1610" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Logistica_di" bpmnElement="Lane_Logistica" isHorizontal="true">
+        <dc:Bounds x="50" y="570" width="1610" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="110" y="62" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_01_di" bpmnElement="Task_01_Solicitud">
+        <dc:Bounds x="190" y="45" width="140" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_02_di" bpmnElement="Task_02_Recepcion">
+        <dc:Bounds x="190" y="170" width="140" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_03_di" bpmnElement="Task_03_RegistroQR">
+        <dc:Bounds x="360" y="170" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_04_di" bpmnElement="Task_04_EvidenciaIngreso">
+        <dc:Bounds x="540" y="170" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_05_di" bpmnElement="Task_05_Diagnostico">
+        <dc:Bounds x="360" y="320" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_01_di" bpmnElement="Gateway_01_Clasificacion" isMarkerVisible="true">
+        <dc:Bounds x="555" y="330" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_06_di" bpmnElement="Task_06_Reacondicionar">
+        <dc:Bounds x="650" y="285" width="150" height="65" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_07_di" bpmnElement="Task_07_EvidenciaTecnica">
+        <dc:Bounds x="840" y="320" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_08_di" bpmnElement="Task_08_StockAtomico">
+        <dc:Bounds x="650" y="470" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_09_di" bpmnElement="Task_09_AsignarUbicacion">
+        <dc:Bounds x="840" y="470" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_10_di" bpmnElement="Task_10_AnalizarFlujo">
+        <dc:Bounds x="650" y="645" width="150" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_02_di" bpmnElement="Gateway_02_Capacidad" isMarkerVisible="true">
+        <dc:Bounds x="845" y="655" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_11_di" bpmnElement="Task_11_AjustarRuta">
+        <dc:Bounds x="800" y="580" width="140" height="55" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_03_di" bpmnElement="Gateway_03_ValidarDestino" isMarkerVisible="true">
+        <dc:Bounds x="945" y="655" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_12_di" bpmnElement="Task_12_Despachar">
+        <dc:Bounds x="1040" y="645" width="145" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_13_di" bpmnElement="Task_13_ConfirmarActa">
+        <dc:Bounds x="1215" y="645" width="145" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_14_di" bpmnElement="Task_14_CerrarTrazabilidad">
+        <dc:Bounds x="1390" y="645" width="145" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="1570" y="662" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_15_No_di" bpmnElement="Flow_15_No">
+        <di:waypoint x="970" y="655" />
+        <di:waypoint x="970" y="645" />
+        <di:waypoint x="870" y="645" />
+        <di:waypoint x="870" y="635" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

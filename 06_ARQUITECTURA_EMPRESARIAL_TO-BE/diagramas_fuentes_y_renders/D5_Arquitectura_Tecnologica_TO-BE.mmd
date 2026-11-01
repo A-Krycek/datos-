@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph POOL["POOL: AWS Cloud — Arquitectura Tecnológica TO-BE para EcoRAEE Cloud (Vista en Carriles BPMN)"]
+        direction TB
+
+        subgraph L_EDGE["1. Borde Web e Identidad IAM"]
+            TEC01["<b>TEC-01 Alojamiento de Frontend Web (Amazon S3 Static Website Hosting / Cliente SPA)</b><br/>Entrega el Portal Web SPA con alta disponibilidad mediante peticiones HTTPS hacia navegadores"]
+            TEC06["<b>TEC-06 Gobierno de Identidades y Accesos (AWS IAM + Rol de Servicio)</b><br/>Aplica el principio de mínimo privilegio: TEC-03 -> TEC-05 / TEC-07 sin credenciales estáticas en código (RA-07)"]
+        end
+
+        subgraph L_COMP["2. Cómputo y Red VPC (EC2 REST)"]
+            TEC03["<b>TEC-03 Balanceo y Cómputo Backend (Application Load Balancer + Amazon EC2 / ECS)</b><br/>Ejecuta la API REST de MOD-01 a MOD-08, el motor Edmonds-Karp y las reglas RN-01 a RN-08"]
+            TEC02["<b>TEC-02 Red Virtual Aislada y Seguridad Perimetral (Amazon VPC + Security Groups)</b><br/>Segmenta subred pública (ALB) y privada (EC2 y RDS), restringiendo el acceso exclusivamente al backend TEC-03"]
+        end
+
+        subgraph L_DATA["3. Persistencia Transaccional RDS y S3 Privado"]
+            TEC04[("<b>TEC-04 Base de Datos Relacional Transaccional (Amazon RDS for PostgreSQL)</b><br/>Almacena objetos OI-01 a OI-10 y el historial inmutable con transacciones ACID y backups automáticos")]
+            TEC05[("<b>TEC-05 Almacenamiento Seguro de Evidencias (Amazon S3 - Bucket Privado)</b><br/>Resguarda fotos, actas firmadas y certificados (OI-07) con cifrado SSE-S3 y URLs prefirmadas")]
+        end
+
+        subgraph L_OBS["4. Observabilidad y Auditoría Cloud"]
+            TEC07["<b>TEC-07 Monitoreo Operativo, Métricas y Auditoría Cloud (Amazon CloudWatch + AWS CloudTrail)</b><br/>Centraliza logs de aplicación, alarmas operativas (CPU, memoria, latencia, conexiones) y pistas de auditoría (PA-06 / RA-07)"]
+        end
+
+        TEC01 -->|Peticiones HTTPS REST / JWT| TEC03
+        TEC06 -. Asigna Rol IAM a EC2 .-> TEC03
+        TEC02 -. Aísla y filtra puertos .-> TEC03
+        TEC03 -->|Transacciones SQL ACID TCP 5432| TEC04
+        TEC03 -->|SDK S3 Subida y URLs prefirmadas| TEC05
+        TEC03 -. Logs y métricas .-> TEC07
+        TEC04 -. Métricas de BD .-> TEC07
+        TEC05 -. Eventos de acceso S3 .-> TEC07
+    end
+
+    classDef edge fill:#f2f7fd,stroke:#1e4e79,stroke-width:1.5px,color:#000;
+    classDef comp fill:#f0f9f2,stroke:#1e5631,stroke-width:1.5px,color:#000;
+    classDef data fill:#eef3f8,stroke:#1b365d,stroke-width:1.8px,color:#000;
+    classDef obs fill:#f6f2fa,stroke:#6a3d9a,stroke-width:1.5px,color:#000;
+    classDef net fill:#e8f8f0,stroke:#0f5132,stroke-width:1.5px,color:#000;
+
+    class TEC01 edge;
+    class TEC06 net;
+    class TEC03 comp;
+    class TEC02 net;
+    class TEC04,TEC05 data;
+    class TEC07 obs;

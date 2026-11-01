@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_Process_D1_Capacidades"
+                  targetNamespace="http://uide.edu.ec/ecoraee/bpmn">
+  <bpmn:collaboration id="Collab_Process_D1_Capacidades">
+    <bpmn:participant id="Participant_Pool" name="UIDA - Mapa de Capacidades TO-BE EcoRAEE Cloud" processRef="Process_D1_Capacidades" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_D1_Capacidades" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_D1_Capacidades">
+      <bpmn:lane id="Lane_Est" name="Nivel 1: Capacidades Estrategicas y de Gobierno">
+        <bpmn:flowNodeRef>CAP_06</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_08</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_09</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Mis" name="Nivel 1: Capacidades Operativas Misionales RAEE">
+        <bpmn:flowNodeRef>CAP_01</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_02</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_03</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_05</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_07</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Sop" name="Nivel 1: Capacidades de Soporte y Aseguramiento">
+        <bpmn:flowNodeRef>CAP_04</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CAP_10</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:subProcess id="CAP_06" name="CAP-06 Monitoreo, Control y Analitica Ejecutiva (Fortalecer)" />
+    <bpmn:subProcess id="CAP_08" name="CAP-08 Coordinacion con Generadores y Beneficiarios (Fortalecer)" />
+    <bpmn:subProcess id="CAP_09" name="CAP-09 Analisis de Capacidad y Flujo de Red (Incorporar)" />
+    <bpmn:subProcess id="CAP_01" name="CAP-01 Recepcion y Registro de Ingreso de RAEE (Fortalecer)" />
+    <bpmn:subProcess id="CAP_02" name="CAP-02 Evaluacion Tecnica y Clasificacion (Fortalecer)" />
+    <bpmn:subProcess id="CAP_03" name="CAP-03 Gestion de Inventario y Almacenamiento (Fortalecer)" />
+    <bpmn:subProcess id="CAP_05" name="CAP-05 Gestion de Logistica y Transferencias (Fortalecer)" />
+    <bpmn:subProcess id="CAP_07" name="CAP-07 Disposicion Final y Cierre de Caso (Fortalecer)" />
+    <bpmn:subProcess id="CAP_04" name="CAP-04 Gestion de Evidencias Digitales (Fortalecer)" />
+    <bpmn:subProcess id="CAP_10" name="CAP-10 Gestion de Identidad, Acceso y Auditoria (Incorporar)" />
+    <bpmn:sequenceFlow id="F_C1_C2" sourceRef="CAP_01" targetRef="CAP_02" />
+    <bpmn:sequenceFlow id="F_C2_C3" sourceRef="CAP_02" targetRef="CAP_03" />
+    <bpmn:sequenceFlow id="F_C3_C5" sourceRef="CAP_03" targetRef="CAP_05" />
+    <bpmn:sequenceFlow id="F_C5_C7" sourceRef="CAP_05" targetRef="CAP_07" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Process_D1_Capacidades">
+    <bpmndi:BPMNPlane id="BPMNPlane_Process_D1_Capacidades" bpmnElement="Collab_Process_D1_Capacidades">
+      <bpmndi:BPMNShape id="Participant_Pool_di" bpmnElement="Participant_Pool" isHorizontal="true">
+        <dc:Bounds x="20" y="20" width="1750" height="500" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Est_di" bpmnElement="Lane_Est" isHorizontal="true">
+        <dc:Bounds x="50" y="20" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Mis_di" bpmnElement="Lane_Mis" isHorizontal="true">
+        <dc:Bounds x="50" y="180" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Sop_di" bpmnElement="Lane_Sop" isHorizontal="true">
+        <dc:Bounds x="50" y="340" width="1720" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_06_di" bpmnElement="CAP_06">
+        <dc:Bounds x="140" y="55" width="280" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_08_di" bpmnElement="CAP_08">
+        <dc:Bounds x="520" y="55" width="300" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_09_di" bpmnElement="CAP_09">
+        <dc:Bounds x="920" y="55" width="300" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_01_di" bpmnElement="CAP_01">
+        <dc:Bounds x="120" y="215" width="230" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_02_di" bpmnElement="CAP_02">
+        <dc:Bounds x="410" y="215" width="230" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_03_di" bpmnElement="CAP_03">
+        <dc:Bounds x="700" y="215" width="250" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_05_di" bpmnElement="CAP_05">
+        <dc:Bounds x="1010" y="215" width="240" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_07_di" bpmnElement="CAP_07">
+        <dc:Bounds x="1310" y="215" width="240" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_04_di" bpmnElement="CAP_04">
+        <dc:Bounds x="250" y="375" width="340" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CAP_10_di" bpmnElement="CAP_10">
+        <dc:Bounds x="780" y="375" width="380" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F_C1_C2_di" bpmnElement="F_C1_C2">
+        <di:waypoint x="350" y="260" />
+        <di:waypoint x="410" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C2_C3_di" bpmnElement="F_C2_C3">
+        <di:waypoint x="640" y="260" />
+        <di:waypoint x="700" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C3_C5_di" bpmnElement="F_C3_C5">
+        <di:waypoint x="950" y="260" />
+        <di:waypoint x="1010" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F_C5_C7_di" bpmnElement="F_C5_C7">
+        <di:waypoint x="1250" y="260" />
+        <di:waypoint x="1310" y="260" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

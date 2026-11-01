@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph POOL["POOL: UIDA — Mapa de Capacidades TO-BE EcoRAEE Cloud"]
+        direction TB
+        
+        subgraph L1_EST["Nivel 1: Capacidades Estratégicas y de Gobierno"]
+            direction TB
+            CAP06["<b>CAP-06 Monitoreo, Control y Analítica Ejecutiva</b><br/>Estado TO-BE: Fortalecer (Tableros KPI en tiempo real)<br/>Supervisa tiempos de ciclo, stock y desvíos de red (P-06 / OBJ-06 / RA-06)"]
+            CAP08["<b>CAP-08 Coordinación con Generadores y Beneficiarios</b><br/>Estado TO-BE: Fortalecer (Solicitudes y actas digitales)<br/>Vincula unidades académicas, talleres, gestores y ONG (P-01, P-04 / OBJ-01, OBJ-04)"]
+            CAP09["<b>CAP-09 Análisis de Capacidad y Flujo de Red [INCORPORADA]</b><br/>Estado TO-BE: Incorporar (Grafo G=(V,E,c) Edmonds-Karp)<br/>Calcula flujo máximo, corte mínimo y cuellos de botella (P-03, P-06 / OBJ-03, OBJ-06)"]
+        end
+
+        subgraph L1_OPE["Nivel 1: Capacidades Operativas Misionales (Cadena de Valor RAEE)"]
+            direction LR
+            START1((Ingreso<br/>RAEE)) --> CAP01["<b>CAP-01 Recepción y Registro de Ingreso</b><br/>Captura en origen y QR único<br/>(RN-01 / PA-03)"]
+            CAP01 --> CAP02["<b>CAP-02 Evaluación Técnica y Clasificación</b><br/>Diagnóstico en 4 vías circulares<br/>(RN-02 / PA-01)"]
+            CAP02 --> CAP03["<b>CAP-03 Gestión de Inventario y Almacenamiento</b><br/>Bodega 1:1 y órdenes de taller<br/>(RN-06 / RA-03)"]
+            CAP03 --> CAP05["<b>CAP-05 Gestión de Logística y Transferencias</b><br/>Despacho validado por capacidad de red<br/>(RN-04, RN-05 / RA-04)"]
+            CAP05 --> CAP07["<b>CAP-07 Disposición Final y Cierre de Caso</b><br/>Cierre auditable con acta y trazabilidad<br/>(RN-08 / PA-02)"]
+            CAP07 --> END1(((Ciclo<br/>Cerrado)))
+        end
+
+        subgraph L1_SOP["Nivel 1: Capacidades de Soporte y Aseguramiento"]
+            direction TB
+            CAP04["<b>CAP-04 Gestión de Evidencias Digitales</b><br/>Estado TO-BE: Fortalecer (Almacenamiento seguro en Amazon S3)<br/>Vincula fotos, diagnósticos y actas a transiciones (RN-03 / PA-04 / RA-05)"]
+            CAP10["<b>CAP-10 Gestión de Identidad, Acceso y Auditoría [INCORPORADA]</b><br/>Estado TO-BE: Incorporar (Segregación RBAC y bitácora inmutable)<br/>Asegura autoría verificable y control por rol (PA-06, PA-07 / RA-01, RA-07)"]
+        end
+
+        CAP06 -. Supervisa .-> CAP01
+        CAP08 -. Coordina .-> CAP03
+        CAP09 -. Optimiza rutas .-> CAP05
+        CAP04 -. Soporta evidencias .-> CAP02
+        CAP10 -. Audita y protege RBAC .-> CAP05
+    end
+
+    classDef est fill:#f6f2fa,stroke:#6a3d9a,stroke-width:1.5px,color:#000;
+    classDef ope fill:#f0f9f2,stroke:#1e5631,stroke-width:1.5px,color:#000;
+    classDef sop fill:#eef3f8,stroke:#1b365d,stroke-width:1.5px,color:#000;
+    classDef evt fill:#e6f7ec,stroke:#1e7e34,stroke-width:2px,color:#000;
+    classDef endevt fill:#fdeaea,stroke:#b02a37,stroke-width:3px,color:#000;
+
+    class CAP06,CAP08,CAP09 est;
+    class CAP01,CAP02,CAP03,CAP05,CAP07 ope;
+    class CAP04,CAP10 sop;
+    class START1 evt;
+    class END1 endevt;
