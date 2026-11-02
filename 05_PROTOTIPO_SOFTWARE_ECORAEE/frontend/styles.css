@@ -1,6 +1,7 @@
 /* ==============================================================================
    ECORAEE CLOUD — DESIGN SYSTEM & STYLES (MODERN SPA)
    Diseñado para accesibilidad, usabilidad técnica y economía circular (RNF-07)
+   Sin uso de emojis — Iconografía vectorial SVG pura y tipografía institucional
    ============================================================================== */
 
 :root {
@@ -109,12 +110,54 @@ body {
     align-items: center;
 }
 
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+
+.mt-1 { margin-top: 4px; }
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 14px; }
 .mt-4 { margin-top: 20px; }
+.mb-1 { margin-bottom: 4px; }
 .mb-2 { margin-bottom: 8px; }
 .mb-3 { margin-bottom: 14px; }
 .mb-4 { margin-bottom: 20px; }
+
+/* ==============================================================================
+   ICONOGRAFÍA VECTORIAL SVG
+   ============================================================================== */
+.svg-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.svg-icon-lg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: inline-block;
+}
+
+.nav-svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
 
 /* ==============================================================================
    ENCABEZADO PRINCIPAL (HEADER)
@@ -142,10 +185,13 @@ body {
 }
 
 .logo-icon {
-    font-size: 26px;
     background: var(--brand-light);
+    color: var(--brand-dark);
     border-radius: var(--radius-sm);
-    padding: 4px 8px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
@@ -161,35 +207,46 @@ body {
     color: var(--text-muted);
 }
 
-.user-profile-bar {
+/* Barra de Sesión de Usuario (Autenticación y Mínimo Privilegio) */
+.user-session-bar {
     display: flex;
     align-items: center;
     gap: 16px;
 }
 
-.role-selector-container {
+.session-profile-card {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.role-select {
-    padding: 6px 12px;
+    gap: 10px;
+    padding: 4px 12px 4px 6px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
-    background-color: var(--bg-surface);
-    color: var(--text-primary);
-    font-weight: 600;
-    font-size: 0.85rem;
+    background-color: #f8fafc;
     cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
 }
 
-.role-select:focus {
+.session-profile-card:hover {
+    background-color: var(--brand-light);
     border-color: var(--brand-primary);
+}
+
+.session-user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.session-user-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.session-user-role {
+    font-size: 0.72rem;
+    color: var(--brand-dark);
+    font-weight: 600;
 }
 
 .system-status-badge {
@@ -280,10 +337,6 @@ body {
     font-weight: 600;
 }
 
-.nav-icon {
-    font-size: 1.1rem;
-}
-
 .sidebar-footer {
     padding: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -294,6 +347,14 @@ body {
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+}
+
+.sidebar-user-info:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .user-avatar {
@@ -1032,8 +1093,21 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    max-width: 400px;
+    max-width: 420px;
 }
+
+.toast-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.toast-badge.success { background: #059669; color: #fff; }
+.toast-badge.error { background: #dc2626; color: #fff; }
+.toast-badge.warning { background: #d97706; color: #fff; }
+.toast-badge.info { background: #2563eb; color: #fff; }
 
 @keyframes toastSlideIn {
     from { transform: translateX(50px); opacity: 0; }
@@ -1113,6 +1187,76 @@ body {
     padding: 14px 20px;
     border-top: 1px solid var(--border-color);
     background-color: #f8fafc;
+}
+
+/* ==============================================================================
+   VISTA DE PERFIL DE USUARIO Y GESTIÓN DE DATOS
+   ============================================================================== */
+.profile-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.profile-avatar-lg {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background-color: var(--brand-primary);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.profile-hero-info h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.profile-hero-info p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.permission-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.permission-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #065f46;
+    background-color: #ecfdf5;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #a7f3d0;
+}
+
+.restriction-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #991b1b;
+    background-color: #fef2f2;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #fecaca;
 }
 
 /* ==============================================================================
