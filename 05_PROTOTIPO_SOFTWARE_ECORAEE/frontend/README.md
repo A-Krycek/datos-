@@ -1,129 +1,160 @@
-# EcoRAEE Cloud — Frontend Single Page Application (SPA)
+# EcoRAEE Cloud — Frontend en React (SPA)
 **Universidad Internacional del Ecuador (UIDE) / Arizona State University (ASU)**  
 **Proyecto Integrador — Quinto Semestre**
 
-Aplicación web cliente Single Page Application (SPA) modular, reactiva y accesible, diseñada con arquitectura **Zero-Build** para operar tanto conectada a la API REST de **FastAPI** como alojada de forma estática en **Amazon S3 Static Website Hosting** con costo de cómputo de $0.00 USD/mes.
+Plataforma web cliente Single Page Application (SPA) modular, reactiva y accesible, desarrollada en **React 19** con **Vite** para la gestión, pesaje, diagnóstico técnico y trazabilidad integral de Residuos de Aparatos Eléctricos y Electrónicos (RAEE).
 
 ---
 
 ## 1. Alcance y Arquitectura de la Solución (Parte 1: Frontend)
 
-La interfaz gráfica implementa todas las pantallas, flujos y reglas de negocio definidas para el proyecto EcoRAEE Cloud, aplicando el **Principio de Mínimo Privilegio (PoLP)** y Control de Acceso Basado en Roles (RBAC):
+La aplicación implementa todas las pantallas, componentes, flujos y reglas de negocio del sistema EcoRAEE Cloud, aplicando el **Principio de Mínimo Privilegio (PoLP)** y Control de Acceso Basado en Roles (RBAC):
 
 ```mermaid
-flowchart LR
-    subgraph UI["Vistas y Pantallas del Frontend SPA"]
-        V1["Dashboard Ejecutivo"]
-        V2["Catálogo RAEE (CRUD)"]
-        V3["Lotes de Recepción"]
-        V4["Taller y Diagnóstico (RN-02/04)"]
-        V5["Logística y Traslados (RN-03/05)"]
-        V6["Trazabilidad (Timeline CP-14)"]
-        V7["Destino Final (Cierre RN-08)"]
-        V8["Red Edmonds-Karp (CP-08/09)"]
-        V9["Accesibilidad (WCAG CP-15)"]
-        V10["Mi Perfil / Datos de Usuario"]
+flowchart TD
+    subgraph UI["Vistas y Pantallas en React 19"]
+        V1["1. Dashboard Ejecutivo & Métricas"]
+        V2["2. Inventario de Dispositivos (CRUD)"]
+        V3["3. Lotes y Acopio"]
+        V4["4. Diagnóstico y Taller (RN-02/04)"]
+        V5["5. Despacho y Red Logística (RN-03/05)"]
+        V6["6. Cadena de Custodia (RN-08)"]
+        V7["7. Reportes e Impacto Ambiental"]
+        V8["8. Escáner y Trazabilidad QR"]
+        V9["9. Suite de Pruebas (CP-01 a CP-10)"]
+        V10["10. Mi Perfil / Datos de Usuario"]
     end
 
-    subgraph Core["Capa de Negocio y Estado en Cliente"]
-        State["appState & StorageService (localStorage Reactivo)"]
-        API["ApiService (Cliente REST con JWT)"]
+    subgraph Context["Capa de Estado React (Context API)"]
+        AuthCtx["AuthContext (RBAC / PoLP / Sesiones)"]
+        DataCtx["DataContext (Dispositivos / Lotes / Movimientos)"]
+        ThemeCtx["ThemeContext (Accesibilidad WCAG 2.1 AAA)"]
+        ToastCtx["ToastContext (Notificaciones del Sistema)"]
     end
 
-    subgraph Backend["Capa de Servicios Cloud"]
-        FastAPI["FastAPI / PostgreSQL (Amazon RDS)"]
-        S3["Amazon S3 (Evidencias y Hosting)"]
+    subgraph Service["Servicios e Integración"]
+        API["ApiService (Cliente REST FastAPI)"]
+        Storage["StorageService (Persistencia Local Resiliente)"]
     end
 
-    UI --> State
-    State <--> API
-    API <--> FastAPI
-    API <--> S3
+    UI --> Context
+    Context --> Service
 ```
 
 ---
 
-## 2. Pantallas y Funcionalidades Desarrolladas
+## 2. Tecnologías y Estructura del Proyecto
 
-### 1. Dashboard Ejecutivo & Gobernanza Circular
-* **KPIs en Tiempo Real:** Total RAEE captado en kg, inventario físico (unidades), tasa de reutilización/donación social (%), tasa de reciclaje/chatarra (%) y capacidad logística semanal.
-* **Visualizaciones Gráficas:** Proporción de RAEE por categoría (computadoras, monitores, tablets, teléfonos, equipos de red) y distribución activa del ciclo de vida.
-* **Monitoreo de Centros:** Indicadores porcentuales de saturación en bodegas y laboratorios de campus Matriz, Granados y Taller Lab-300 con alerta ante umbrales mayores al 75%.
+### Stack Tecnológico
+- **React 19** (`react`, `react-dom`) con Hooks funcionales (`useState`, `useEffect`, `useContext`, `useCallback`).
+- **Vite 8** para empaquetado de alta velocidad y compilación modular optimizada.
+- **CSS3 Puro** con variables semánticas, diseño adaptativo (Responsive Grid / Flexbox) y soporte estricto para Alto Contraste (WCAG 2.1 AAA).
+- **0 Emojis**: Iconografía basada íntegramente en SVG vectorial e insignias textuales formales (`[EXITO]`, `[ERROR]`, `[AVISO]`, `[INFO]`).
+- **Persistencia Híbrida**: Integración con endpoints REST de FastAPI con fallback automático a `StorageService` en `localStorage`.
 
-### 2. Catálogo e Inventario de Dispositivos (CRUD Completo)
-* **Registrar (Create):** Modal con autogenerador de código QR institucional (`QR-UIDA-XX-###`), validación de unicidad en tiempo real (CP-02), peso numérico positivo, especificaciones de hardware y asociación a lote.
-* **Consultar / Filtrar (Read):** Búsqueda instantánea multicriterio por texto (QR, número de serie, modelo, procesador) y filtros por categoría, centro y estado.
-* **Visualizar Detalle:** Modal de ficha técnica completa con vista previa de la etiqueta QR institucional para impresión de etiquetas de bodega.
-* **Actualizar (Update):** Edición de número de serie, peso físico medido, condición de desgaste, reubicación de centro de acopio y notas técnicas con validación.
-* **Eliminar / Dar de Baja (Delete):** Modal de confirmación con campo obligatorio de motivo para auditoría institucional (CP-04), restringido exclusivamente al Administrador General bajo el Principio de Mínimo Privilegio.
-* **Exportar Catálogo:** Descarga directa de la tabla de inventario en archivo CSV compatible con hojas de cálculo.
-
-### 3. Lotes de Recepción y Donantes (CRUD)
-* Registro de lotes consolidados de bajas departamentales o donaciones estudiantiles (`LOT-2026-###`).
-* Indicador visual de avance: unidades físicas pesadas versus cantidad declarada por el donante.
-* Filtrado directo de dispositivos vinculados a cada lote.
-
-### 4. Taller Técnico, Diagnóstico y Clasificación Ambiental
-* **Control de Acceso RBAC (RN-02):** La interfaz verifica el rol del usuario activo; si no posee rol de `ROL_TECNICO` o `ROL_ADMIN`, bloquea los permisos de dictamen.
-* **Inspección Técnica:** Registro de prueba de encendido (POST), diagnóstico funcional y estético.
-* **Clasificación Ambiental:** Asignación de jerarquía (`REUTILIZABLE`, `REPARABLE`, `RECICLABLE`, `NO_RECUPERABLE`).
-* **Regla de Negocio RN-04:** Si el equipo es dictaminado como `NO_RECUPERABLE`, el sistema revoca y deshabilita automáticamente la opción de donación social, emitiendo una alerta visual explícita.
-* **Despiece de Componentes:** Registro de piezas útiles extraídas (memorias RAM, SSDs, fuentes) para stock de mantenimiento.
-
-### 5. Logística, Despacho y Traslados entre Nodos
-* Programación de manifiestos de traslado entre centros con validación de que origen y destino sean distintos (RN-03).
-* Multiselección interactiva de dispositivos con cálculo de peso total en tiempo real.
-* **Regla de Negocio RN-05:** Comprobación automática de no saturación de la capacidad del centro de destino.
-* Confirmación de recepción física en destino con sellado de fecha y reubicación automática de inventario.
-
-### 6. Trazabilidad Ininterrumpida Extremo a Extremo
-* Rastreo rápido por código QR o número de serie con accesos directos a casos de prueba oficiales.
-* **Línea de Vida Inmutable (Timeline Vertical):** Cada evento muestra secuencia ordinal, estado, fecha y hora, responsable y observaciones.
-* **Transición de Estado Atómica (CP-03):** Permite avanzar el ciclo de vida validando roles autorizados.
-* **Certificado Imprimible:** Generación de acta oficial con membrete UIDE para impresión o guardado como PDF (`@media print`).
-
-### 7. Destino Final y Certificación de Cierre (RN-08)
-* Formalización de salidas definitivas por canal de Donación Social Educativa o Reciclaje Calificado MAATE.
-* Validación de entidad receptora, fecha oficial de confirmación y número de certificado para cierre formal en estado terminal `TRAZABILIDAD_CERRADA`.
-
-### 8. Optimización de Flujo Logístico (Edmonds-Karp / CP-08 / CP-09)
-* Conexión con el endpoint backend `/api/v1/network/optimize-flow` o motor de optimización local.
-* Visualizador interactivo SVG de la red de transporte del campus UIDA.
-* Conmutador entre **Escenario Base Normal** (3,100 kg/semana) y **Escenario 2: Contingencia Vial Sur** (2,000 kg/semana).
-* Resaltado dinámico de las aristas saturadas que conforman el **Corte Mínimo C(S,T)** (cuellos de botella).
-
-### 9. Usabilidad, Inclusión y Matriz de Casos de Prueba (CP-15)
-* **Modo de Alto Contraste:** Cumplimiento con estándares WCAG 2.1 AAA para ambientes de bodega.
-* **Tipografía Ampliada:** Escalado del tamaño de fuente al 120% para lectura rápida.
-* **Matriz de Casos de Prueba (CP-01 a CP-15):** Botones interactivos que permiten a docentes y evaluadores disparar y verificar el comportamiento de cada prueba con un solo clic.
-
-### 10. Mi Perfil y Gestión de Datos de Usuario (PoLP)
-* **Datos Personales y de Contacto:** Visualización y edición en tiempo real de nombres, apellidos, correo institucional, teléfono y dirección física de oficina.
-* **Seguridad:** Formulario de cambio de contraseña institucional con verificación de contraseña actual y coincidencia.
-* **Matriz de Mínimo Privilegio (PoLP):** Desglose explícito de los permisos otorgados al usuario y las operaciones bloqueadas para garantizar la segregación de funciones.
-
----
-
-## 3. Matriz de Mínimo Privilegio (RBAC) y Cuentas de Acceso
-
-| Usuario | Nombre Completo | Rol Asignado | Alcance de Permisos | Restricciones por PoLP |
-| :--- | :--- | :--- | :--- | :--- |
-| `carlos.operador` | Carlos Mendoza | Operador de Acopio | Recepción física, pesaje, registro QR (CP-02) | Bloqueado en evaluaciones de taller, donaciones, bajas y cierres |
-| `maria.tecnico` | María Salazar | Técnico de Diagnóstico | Pruebas de banco, diagnóstico, clasificación (RN-02) | Bloqueado en bajas, donación de chatarra (RN-04) y transporte |
-| `diego.logistica` | Diego Andrade | Coordinador Logístico | Programación y confirmación de fletes (RN-03, RN-05) | Bloqueado en diagnósticos técnicos y bajas |
-| `ana.auditora` | Ana Paredes | Auditora de Calidad | Auditoría de trazabilidad (CP-14), sellado destino final (RN-08) | Bloqueado en modificación de hardware y bajas sin autorización |
-| `admin_sys` | Administrador General | Administrador General | Gobernanza total, bajas físicas (CP-04), gestión de usuarios | Sin restricciones |
+### Árbol de Archivos
+```text
+frontend/
+├── dist/                          # Compilación de producción (Vite build)
+├── node_modules/                  # Dependencias de React y Vite
+├── public/                        # Recursos públicos
+├── src/
+│   ├── components/
+│   │   ├── common/                # Componentes reutilizables
+│   │   ├── layout/
+│   │   │   ├── Header.jsx         # Encabezado institucional, sesión y accesibilidad
+│   │   │   └── Sidebar.jsx        # Menú lateral con iconos SVG por sección
+│   │   └── modals/
+│   │       ├── DeleteDeviceModal.jsx     # Confirmación de baja con motivo y PoLP
+│   │       ├── DeviceDetailModal.jsx     # Ficha técnica y timeline cronológico
+│   │       ├── DeviceFormModal.jsx       # Formulario registrar/editar con validaciones
+│   │       ├── LoginModal.jsx            # Autenticación con credenciales institucionales
+│   │       ├── PrintCertificateModal.jsx # Certificado institucional imprimible
+│   │       └── QrModal.jsx               # Visualizador de código QR y barras CODE128
+│   ├── context/
+│   │   ├── AuthContext.jsx        # Gestión de usuarios, perfiles y mínimo privilegio
+│   │   ├── DataContext.jsx        # CRUD de activos, pesajes, lotes y traslados
+│   │   ├── ThemeContext.jsx       # Alternancia de alto contraste y fuente grande
+│   │   └── ToastContext.jsx       # Notificaciones flotantes no intrusivas
+│   ├── data/
+│   │   └── seedData.js            # Datos iniciales institucionales (UIDE / ASU)
+│   ├── services/
+│   │   └── apiService.js          # Cliente REST y fallback resiliente en almacenamiento local
+│   ├── styles/
+│   │   └── styles.css             # Estilos globales, variables de color y accesibilidad
+│   ├── views/
+│   │   ├── BatchesView.jsx        # Gestión y consolidación de lotes
+│   │   ├── CustodyView.jsx        # Cierre de cadena de custodia y actas MAAE
+│   │   ├── DashboardView.jsx      # Panel de métricas, gobernanza y KPIs
+│   │   ├── DiagnosisView.jsx      # Taller de evaluación técnica (Lab-302)
+│   │   ├── InventoryView.jsx      # Inventario general con filtros y exportación CSV
+│   │   ├── LogisticsView.jsx      # Despacho y diagrama de red Edmonds-Karp
+│   │   ├── ProfileView.jsx        # Página de usuario: mis datos, contraseña y PoLP
+│   │   ├── QrScannerView.jsx      # Escáner y buscador de pasaporte digital
+│   │   ├── ReportsView.jsx        # Reportes de impacto ambiental y CO2 evitado
+│   │   └── TestsView.jsx          # Suite de pruebas y matriz de reglas de negocio
+│   ├── App.jsx                    # Ensamblador principal de vistas y modales
+│   └── main.jsx                   # Punto de entrada y montaje en el DOM
+├── vanilla/                       # Respaldo de la implementación en HTML/JS puro
+├── index.html                     # Entrada HTML para Vite
+├── package.json                   # Manifiesto npm con scripts dev, build y preview
+├── vite.config.js                 # Configuración del plugin de React en Vite
+└── README.md                      # Documentación técnica del módulo
+```
 
 ---
 
-## 4. Instrucciones de Ejecución
+## 3. Instrucciones de Ejecución
 
-### Opción A: Ejecución Local Inmediata (Zero-Build en Navegador)
-Simplemente haz doble clic sobre el archivo `frontend/index.html` o ábrelo en cualquier navegador moderno (Chrome, Edge, Firefox, Safari). La aplicación funciona al 100% en modo reactivo autónomo.
+### Requisitos Previos
+- **Node.js** v18 o superior (validado en Node v24.19).
+- **npm** v10 o superior (validado en npm v11.17).
 
-### Opción B: Ejecución Conectada con Backend FastAPI
-1. Iniciar el backend en la terminal:
+### Comandos de Ejecución
+1. **Instalar dependencias:**
    ```bash
-   uvicorn backend.app.main:app --reload --port 8000
+   cd 05_PROTOTIPO_SOFTWARE_ECORAEE/frontend
+   npm install
    ```
-2. Abrir `frontend/index.html`. La SPA detectará automáticamente la API en `http://localhost:8000` y mostrará la insignia verde **"Servidor Conectado"**.
+
+2. **Iniciar servidor de desarrollo con Hot Module Replacement (HMR):**
+   ```bash
+   npm run dev
+   ```
+   *La consola indicará la dirección local (por defecto: `http://localhost:5173`).*
+
+3. **Compilar para producción:**
+   ```bash
+   npm run build
+   ```
+   *Genera los archivos empaquetados y optimizados en la carpeta `dist/`.*
+
+4. **Previsualizar la compilación de producción:**
+   ```bash
+   npm run preview
+   ```
+
+---
+
+## 4. Matriz de Mínimo Privilegio (PoLP) y Roles Institucionales
+
+| Rol Institucional | Usuario | Permisos Otorgados | Restricciones Estrictas de Seguridad |
+| :--- | :--- | :--- | :--- |
+| **Operador de Acopio** | `carlos.operador` | Recepción física, pesaje en báscula (`RN-01`), registro de equipos (`CP-02`), impresión de etiquetas QR. | Bloqueado para emitir diagnósticos técnicos (`RN-02`), donaciones (`RN-04`), bajas físicas (`CP-04`) y sellado de actas (`RN-08`). |
+| **Técnico de Diagnóstico** | `maria.tecnico` | Diagnóstico de hardware en taller Lab-302 (`RN-02`), clasificación A/B/C/D, verificación de viabilidad de donación. | Bloqueada para dar de baja activos (`CP-04`) o alterar manifiestos ambientales de transporte. |
+| **Coordinador Logístico** | `diego.logistica` | Despacho de vehículos, cálculo de masa máxima (`RN-03`), monitoreo del modelo Edmonds-Karp (`RN-05`). | Bloqueado para alterar dictámenes técnicos o ejecutar bajas del inventario. |
+| **Auditor de Calidad** | `ana.auditora` | Inspección de trazabilidad integral, verificación de manifiestos MAAE y sellado de actas de custodia (`RN-08`). | Modo estrictamente supervisor; no altera clasificaciones técnicas operativas. |
+| **Administrador General** | `admin_sys` | Control global de plataforma, gestión de cuentas y autorización de bajas de inventario (`CP-04`). | Responsabilidad y auditoría registrada en cada operación destructiva. |
+
+---
+
+## 5. Reglas de Negocio Implementadas y Validadas
+
+- **RN-01 (Pesaje Obligatorio):** Todo dispositivo debe registrar su masa real mayor a 0 kg pesada en báscula.
+- **RN-02 (Dictamen Técnico Exclusivo):** Solo personal con rol técnico o administrador puede emitir evaluaciones de laboratorio.
+- **RN-03 (Capacidad Vehicular):** Las transferencias logísticas impiden exceder la capacidad nominal de carga del camión asignado.
+- **RN-04 (Restricción de Donación):** Prohibición estricta de donar residuos dictaminados como chatarra o repuestos (Grados C y D).
+- **RN-05 (Flujo Máximo Edmonds-Karp):** Visualización interactiva de cuellos de botella en la red entre campus y gestor.
+- **RN-06 (Unicidad Global de QR):** Validación en tiempo real para evitar códigos QR o seriales repetidos.
+- **RN-07 (Control de Acceso PoLP):** Interfaz adaptativa que deshabilita controles y bloquea acciones no autorizadas con alertas formales.
+- **RN-08 (Sellado de Custodia):** Cierre del ciclo de vida legal con número de manifiesto ambiental MAAE y acta firmada.
