@@ -6,7 +6,7 @@ from backend.app.database import get_db
 from backend.app.models.entities import AristaRed, NodoRed
 from backend.app.schemas.dtos import NetworkOptimizationResponse, AristaInfo
 from backend.app.security import get_current_user
-from math.edmonds_karp import EdmondsKarpFlowNetwork
+from backend.app.algorithms.edmonds_karp import EdmondsKarpFlowNetwork
 
 router = APIRouter(prefix="/network", tags=["Optimización Matemática y Flujo Logístico"])
 

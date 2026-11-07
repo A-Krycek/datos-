@@ -26,10 +26,15 @@ def login_for_access_token(
     if not user:
         demo_users = {
             "admin_sys": ("ROL_ADMIN", 1),
+            "admin": ("ROL_ADMIN", 1),
             "operador_carlos": ("ROL_OPERADOR", 2),
+            "carlos.operador": ("ROL_OPERADOR", 2),
             "tecnico_maria": ("ROL_TECNICO", 3),
+            "maria.tecnico": ("ROL_TECNICO", 3),
             "logistica_diego": ("ROL_LOGISTICA", 4),
-            "auditor_ana": ("ROL_AUDITOR", 5)
+            "diego.logistica": ("ROL_LOGISTICA", 4),
+            "auditor_ana": ("ROL_AUDITOR", 5),
+            "ana.auditora": ("ROL_AUDITOR", 5)
         }
         if form_data.username in demo_users and form_data.password in ["admin123", "password123"]:
             role_code, user_id = demo_users[form_data.username]
