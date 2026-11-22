@@ -1,7 +1,8 @@
 // Servicio de comunicación REST con backend FastAPI y almacenamiento local resiliente
 import { INITIAL_USERS, INITIAL_CENTERS, INITIAL_BATCHES, INITIAL_DEVICES, INITIAL_MOVEMENTS } from "../data/seedData";
 
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+const HEALTH_URL = import.meta.env.VITE_HEALTH_URL || (API_BASE_URL.replace("/api/v1", "") + "/health");
 
 const STORAGE_KEYS = {
   USERS: "ecoraee_users",
@@ -56,7 +57,7 @@ export const ApiService = {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 1500);
-      const res = await fetch("http://localhost:8000/health", {
+      const res = await fetch(HEALTH_URL, {
         method: "GET",
         signal: controller.signal
       });
