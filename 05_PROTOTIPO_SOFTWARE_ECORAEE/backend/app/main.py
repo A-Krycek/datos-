@@ -10,7 +10,7 @@ if str(root_path) not in sys.path:
 
 from backend.app.config import settings
 from backend.app.database import engine, Base
-from backend.app.routers import auth, devices, network
+from backend.app.routers import auth, devices, network, evidences
 
 # Inicialización de tablas en la base de datos
 try:
@@ -46,6 +46,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(devices.router, prefix=settings.API_V1_STR)
 app.include_router(network.router, prefix=settings.API_V1_STR)
+app.include_router(evidences.router, prefix=settings.API_V1_STR)
 
 @app.get("/", tags=["Sistema"])
 def root():

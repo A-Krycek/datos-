@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/network", tags=["Optimización Matemática y Flujo L
 
 @router.get("/optimize-flow", response_model=NetworkOptimizationResponse)
 def optimizar_flujo_red(
-    escenario: str = Query("BASE", enum=["BASE", "CONTINGENCIA"]),
+    escenario: Literal["BASE", "CONTINGENCIA"] = Query("BASE", description="Escenario de simulacion: BASE o CONTINGENCIA"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):

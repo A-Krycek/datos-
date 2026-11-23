@@ -13,6 +13,7 @@ from backend.app.security import (
 router = APIRouter(prefix="/auth", tags=["Autenticación y RBAC"])
 
 @router.post("/login", response_model=Token)
+@router.post("/token", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
