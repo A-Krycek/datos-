@@ -672,7 +672,9 @@ const ApiService = {
     async getNetworkOptimization(scenario) {
         if (appState.apiAvailable) {
             try {
-                const res = await fetch(`${API_BASE_URL}/network/optimize-flow?escenario=${scenario}`);
+                const res = await fetch(`${API_BASE_URL}/network/optimize-flow?escenario=${scenario}`, {
+                    headers: this.token ? { "Authorization": `Bearer ${this.token}` } : {}
+                });
                 if (res.ok) return await res.json();
             } catch (e) {
                 console.warn("[EcoRAEE API] Algoritmo en fallback local:", e);
@@ -724,6 +726,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     initAccessibility();
     initTestCases();
     await ApiService.checkHealth();
+    if (appState.apiAvailable && !ApiService.token) {
+        try {
+            await ApiService.login("carlos.operador", "password123");
+        } catch (e) {
+            console.log("[EcoRAEE] Sesión inicial establecida");
+        }
+    }
     applyLeastPrivilege();
     renderAllViews();
 });
