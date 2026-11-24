@@ -20,7 +20,7 @@ Plataforma Cloud de Gestión, Trazabilidad y Optimización de RAEE (Residuos de 
 * **`01_ENTREGA_FASE2_SQL_SERVER/`**: Scripts T-SQL oficiales (`01_DDL.sql`, `02_DML.sql`, `03_pruebas.sql`, `04_consultas.sql`), diccionario de datos y documento de entrega formal (`DOCUMENTO_ENTREGA_FASE2_BDD.docx`).
 * **`02_MODELO_CONCEPTUAL_Y_EER_APROBADO/`**: Diagrama Entidad-Relación extendido (EER) corregido y aprobado.
 * **`03_MATEMATICA_Y_OPTIMIZACION_RED_LOGISTICA/`**: Formalización matemática del problema de flujo en redes y script ejecutable del algoritmo de Edmonds-Karp (`edmonds_karp.py`).
-* **`04_ARQUITECTURA_CLOUD_AWS/`**: Blueprint de arquitectura en la nube para cuenta personal económica y plantilla CloudFormation (`02_cloudformation_ecoraee.yaml`).
+* **`04_ARQUITECTURA_CLOUD_AWS/`**: Blueprint de arquitectura en la nube para cuenta personal económica, plantilla CloudFormation (`02_cloudformation_ecoraee.yaml`) y reporte de despliegue y gestión con PM2 en EC2 (`03_REPORTE_DESPLIEGUE_PROCESOS_BACKEND_EC2.md`).
 * **`05_PROTOTIPO_SOFTWARE_ECORAEE/`**:
   * `backend/`: API REST modular desarrollada en FastAPI con autenticación JWT, registro de dispositivos QR y endpoint de optimización de red.
   * `frontend/`: Aplicación web SPA con panel de control, escáner, línea de tiempo y visualización del grafo de transporte.

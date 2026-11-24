@@ -77,3 +77,26 @@ backend/
 | `/api/v1/devices/{qr}/transition-state` | `POST` | **CP-03** (Transición Estado) | Actualiza el ciclo de vida, sella fecha fin del estado previo y genera secuencia inmutable. |
 | `/api/v1/devices/{qr}` | `GET` | **CP-14** (Trazabilidad) | Retorna todo el historial ordenado cronológicamente desde el ingreso hasta el destino final. |
 | `/api/v1/network/optimize-flow` | `GET` | **CP-09** (Integración Matemática) | Ejecuta Edmonds-Karp sobre las aristas de la BD, calculando flujo máximo y corte mínimo. |
+
+---
+
+## 5. Despliegue en Producción (AWS EC2 & PM2)
+
+El backend en la instancia EC2 (`ip-172-31-12-142`) opera administrado mediante **PM2** para garantizar alta disponibilidad y reinicios persistentes:
+
+```bash
+# Iniciar servicio con PM2
+pm2 start ./venv/bin/uvicorn --name "ecoraee" -- app.main:app --host 0.0.0.0 --port 8000
+pm2 save
+pm2 startup
+
+# Actualización rápida en producción
+cd ~/datos- && git pull origin main
+pm2 restart ecoraee
+
+# Verificación de salud y logs
+pm2 status
+pm2 logs ecoraee
+```
+*Reporte completo:* Ver [03_REPORTE_DESPLIEGUE_PROCESOS_BACKEND_EC2.md](../../04_ARQUITECTURA_CLOUD_AWS/03_REPORTE_DESPLIEGUE_PROCESOS_BACKEND_EC2.md).
+
