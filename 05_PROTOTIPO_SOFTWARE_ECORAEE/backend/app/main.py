@@ -9,14 +9,14 @@ if str(root_path) not in sys.path:
     sys.path.insert(0, str(root_path))
 
 from backend.app.config import settings
-from backend.app.database import engine, Base
+from backend.app.database import init_db
 from backend.app.routers import auth, devices, network, evidences
 
-# Inicialización de tablas en la base de datos
+# Inicialización de tablas en la base de datos nativa SQLite
 try:
-    Base.metadata.create_all(bind=engine)
+    init_db()
 except Exception as e:
-    print(f"[EcoRAEE Backend] Advertencia al conectar/crear tablas en BD: {e}")
+    print(f"[EcoRAEE Backend] Advertencia al conectar/crear tablas en BD SQLite: {e}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

@@ -2,7 +2,10 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from typing import List, Dict, Any
-from backend.app.config import settings
+try:
+    from backend.app.config import settings
+except ImportError:
+    from app.config import settings
 
 router = APIRouter(prefix="/evidences", tags=["Evidencias Digitales S3"])
 

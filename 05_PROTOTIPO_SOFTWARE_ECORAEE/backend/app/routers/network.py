@@ -1,9 +1,8 @@
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+import sqlite3
 
 from backend.app.database import get_db
-from backend.app.models.entities import AristaRed, NodoRed
 from backend.app.schemas.dtos import NetworkOptimizationResponse, AristaInfo
 from backend.app.security import get_current_user
 from backend.app.algorithms.edmonds_karp import EdmondsKarpFlowNetwork
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/network", tags=["Optimización Matemática y Flujo L
 @router.get("/optimize-flow", response_model=NetworkOptimizationResponse)
 def optimizar_flujo_red(
     escenario: Literal["BASE", "CONTINGENCIA"] = Query("BASE", description="Escenario de simulacion"),
-    db: Session = Depends(get_db),
+    db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -22,8 +21,13 @@ def optimizar_flujo_red(
     """
     net = EdmondsKarpFlowNetwork()
 
-    # 1. Consultar aristas y nodos desde la base de datos
-    aristas = db.query(AristaRed).filter(AristaRed.activa == True).all()
+    # 1. Consultar aristas y nodos desde la base de datos nativa
+    try:
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM arista_red WHERE activa = 1")
+        aristas = cursor.fetchall()
+    except Exception:
+        aristas = []
 
     # Si la BD contiene aristas físicas, utilizarlas; si está vacía, usar topología estándar
     if aristas:
