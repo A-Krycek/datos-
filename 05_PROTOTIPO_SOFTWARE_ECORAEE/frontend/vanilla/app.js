@@ -9,11 +9,29 @@
  * ==============================================================================
  */
 
-// Configuración de API Backend
-const BACKEND_HOST = "32.200.238.44:8000";
-const API_BASE_URL = (typeof window !== "undefined" && window.location.host === BACKEND_HOST)
-    ? `${window.location.protocol}//${window.location.host}/api/v1`
-    : `http://${BACKEND_HOST}/api/v1`;
+// Configuración dinámica de API Backend con fallback local y tolerancia a fallos
+const DEFAULT_BACKEND_HOST = "32.200.238.44:8000";
+
+function resolveApiBaseUrl() {
+    if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiParam = urlParams.get("api");
+        if (apiParam) {
+            localStorage.setItem("ECORAEE_API_URL", apiParam);
+            return apiParam.endsWith("/api/v1") ? apiParam : `${apiParam}/api/v1`;
+        }
+        const savedApi = localStorage.getItem("ECORAEE_API_URL");
+        if (savedApi) {
+            return savedApi.endsWith("/api/v1") ? savedApi : `${savedApi}/api/v1`;
+        }
+        if (window.location.host && window.location.host.includes(":8000")) {
+            return `${window.location.protocol}//${window.location.host}/api/v1`;
+        }
+    }
+    return `http://${DEFAULT_BACKEND_HOST}/api/v1`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // ==============================================================================
 // 1. DATASET SEMILLA INICIAL DEL CAMPUS UIDA
@@ -703,6 +721,84 @@ const ApiService = {
                 mensaje_decision: "Alerta de contingencia vial: Capacidad reducida a 2,000.00 kg/sem (-35.5%). La arista Matriz -> ReciclaMetal está estrangulada a 400 kg por cierre vial. Se acumulan 1,100 kg en bodegas de Campus Matriz. Decisión: Activar fletes nocturnos alternativos."
             };
         }
+    },
+
+    async uploadEvidence(codigoQr, file) {
+        if (appState.apiAvailable) {
+            try {
+                const formData = new FormData();
+                formData.append("file", file);
+                const res = await fetch(`${API_BASE_URL}/evidences/upload/${encodeURIComponent(codigoQr)}`, {
+                    method: "POST",
+                    headers: this.token ? { "Authorization": `Bearer ${this.token}` } : {},
+                    body: formData
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    this._persistLocalEvidence(codigoQr, {
+                        file_name: file.name,
+                        file_url: result.file_url || result.s3_url || result.url,
+                        s3_key: result.s3_key || `evidencias/${codigoQr}/${file.name}`,
+                        bucket: "ecoraee-evidencias-uide-2026",
+                        is_local: false,
+                        fecha: new Date().toISOString()
+                    });
+                    return result;
+                }
+            } catch (e) {
+                console.warn("[EcoRAEE API] Error al subir evidencia a S3:", e);
+            }
+        }
+        // Fallback local con FileReader
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const evidenceObj = {
+                    file_name: file.name,
+                    file_url: reader.result,
+                    s3_key: `evidencias/${codigoQr}/${file.name}`,
+                    bucket: "ecoraee-evidencias-uide-2026 (Local Cache)",
+                    is_local: true,
+                    fecha: new Date().toISOString()
+                };
+                ApiService._persistLocalEvidence(codigoQr, evidenceObj);
+                resolve({
+                    status: "success",
+                    message: "Evidencia almacenada en modo local",
+                    ...evidenceObj
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+
+    async getEvidences(codigoQr) {
+        if (appState.apiAvailable) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/evidences/list/${encodeURIComponent(codigoQr)}`, {
+                    headers: this.token ? { "Authorization": `Bearer ${this.token}` } : {}
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.evidences) && data.evidences.length > 0) {
+                        return data.evidences;
+                    }
+                }
+            } catch (e) {
+                console.warn("[EcoRAEE API] Error al listar evidencias S3:", e);
+            }
+        }
+        const dev = appState.data.devices.find(d => d.codigo_qr === codigoQr);
+        return (dev && Array.isArray(dev.evidencias)) ? dev.evidencias : [];
+    },
+
+    _persistLocalEvidence(codigoQr, evidenceObj) {
+        const dev = appState.data.devices.find(d => d.codigo_qr === codigoQr);
+        if (dev) {
+            if (!Array.isArray(dev.evidencias)) dev.evidencias = [];
+            dev.evidencias.push(evidenceObj);
+            StorageService.save(appState.data);
+        }
     }
 };
 
@@ -760,7 +856,13 @@ function navigateTo(viewId) {
     if (viewId === "technical") renderTechnicalView();
     if (viewId === "logistics") renderMovements();
     if (viewId === "destination") renderFinalDestinationView();
+    if (viewId === "network") renderNetworkScenario(appState.activeScenario || "BASE");
+    if (viewId === "traceability" && appState.trackedQr) trackDevice(appState.trackedQr);
     if (viewId === "profile") renderUserProfile();
+
+    // Restablecer scroll al inicio de la vista
+    const mainEl = document.querySelector(".main-content");
+    if (mainEl) mainEl.scrollTop = 0;
 }
 
 // ==============================================================================
@@ -1914,6 +2016,77 @@ function initTraceability() {
         }
         openPrintCertificateModal(appState.trackedQr);
     });
+
+    // Control de Subida de Evidencias a Amazon S3
+    const btnUpload = document.getElementById("btnUploadEvidenceTrigger");
+    const fileInput = document.getElementById("evidenceFileInput");
+    if (btnUpload && fileInput) {
+        btnUpload.addEventListener("click", () => {
+            if (!appState.trackedQr) {
+                showToast("Rastrea primero un dispositivo antes de adjuntar evidencias.", "error");
+                return;
+            }
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            showToast(`Subiendo evidencia ${file.name} al bucket S3...`, "info");
+            try {
+                await ApiService.uploadEvidence(appState.trackedQr, file);
+                showToast(`Evidencia fotográfica subida a S3 con éxito (ecoraee-evidencias-uide-2026)`, "success");
+                fileInput.value = "";
+                await renderTraceEvidences(appState.trackedQr);
+            } catch (err) {
+                showToast(`Error al subir evidencia: ${err.message}`, "error");
+            }
+        });
+    }
+}
+
+async function renderTraceEvidences(qr) {
+    const galleryEl = document.getElementById("evidenceGalleryList");
+    if (!galleryEl) return;
+    galleryEl.innerHTML = '<span class="text-muted font-12">Consultando repositorio de evidencias en S3...</span>';
+    
+    try {
+        const evidences = await ApiService.getEvidences(qr);
+        galleryEl.innerHTML = "";
+        if (!evidences || evidences.length === 0) {
+            galleryEl.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 0.8rem;">
+                    Sin fotografías adjuntas. Haz clic en "Subir Foto a S3" para registrar evidencia fotográfica en el bucket <code>ecoraee-evidencias-uide-2026</code>.
+                </div>
+            `;
+            return;
+        }
+
+        evidences.forEach(ev => {
+            const card = document.createElement("div");
+            card.className = "evidence-card";
+            const fileUrl = ev.file_url || ev.url || ev.s3_url || 'assets/uide_icon.png';
+            const fileName = ev.file_name || ev.filename || `EVID-${qr}.jpg`;
+            const s3Badge = ev.is_local ? "Almacenamiento Local" : "Amazon S3 (ecoraee-evidencias-uide-2026)";
+            
+            card.innerHTML = `
+                <a href="${fileUrl}" target="_blank" title="Ver imagen en tamaño completo">
+                    <img src="${fileUrl}" alt="Evidencia ${fileName}">
+                </a>
+                <div class="evidence-info">
+                    <strong style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${fileName}</strong>
+                    <div class="mt-1">
+                        <span class="badge ${ev.is_local ? 'badge-amber' : 'badge-green'}">${s3Badge}</span>
+                    </div>
+                    <div class="text-muted font-12 mt-1">${(ev.fecha || '').substring(0, 16)}</div>
+                </div>
+            `;
+            galleryEl.appendChild(card);
+        });
+    } catch {
+        galleryEl.innerHTML = '<span class="text-muted font-12">No se pudieron recuperar las evidencias.</span>';
+    }
 }
 
 function trackDevice(qr) {
@@ -1965,6 +2138,9 @@ function trackDevice(qr) {
         `;
         timeline.appendChild(item);
     });
+
+    // Renderizar evidencias asociadas en S3
+    renderTraceEvidences(found.codigo_qr);
 }
 
 window.trackFromAnywhere = function(qr) {

@@ -97,6 +97,9 @@ body {
     line-height: 1.5;
     height: 100vh;
     min-height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
@@ -104,10 +107,11 @@ body {
 .app-root {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
     width: 100%;
     overflow: hidden;
     min-height: 0;
+    flex: 1;
 }
 
 .font-mono {
@@ -301,8 +305,9 @@ body {
    ============================================================================== */
 .app-layout {
     display: flex;
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
+    height: calc(100vh - 65px);
     overflow: hidden;
 }
 
@@ -315,6 +320,7 @@ body {
     justify-content: space-between;
     padding: 16px 12px;
     flex-shrink: 0;
+    height: 100%;
     overflow-y: auto;
 }
 
@@ -413,38 +419,49 @@ body {
    CONTENIDO PRINCIPAL Y VISTAS
    ============================================================================== */
 .main-content {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
+    overflow-x: hidden;
     min-height: 0;
     height: 100%;
-    padding: 24px 32px 80px 32px;
+    padding: 24px 32px 100px 32px;
     background-color: var(--bg-primary);
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
-/* Scrollbars accesibles */
+/* Scrollbars accesibles de alto contraste */
 .main-content::-webkit-scrollbar,
 .sidebar::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
 }
 
-.main-content::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
 .sidebar::-webkit-scrollbar-track {
-    background: transparent;
+    background: #0f172a;
 }
 
 .main-content::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 4px;
+    background-color: #94a3b8;
+    border-radius: 6px;
+    border: 2px solid #f1f5f9;
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
+    background-color: #64748b;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
     background-color: #334155;
-    border-radius: 4px;
+    border-radius: 6px;
+    border: 2px solid #0f172a;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: #475569;
 }
 
 .content-view {
@@ -1488,6 +1505,73 @@ body {
     font-weight: 600;
 }
 
+/* ==============================================================================
+   EVIDENCIAS DIGITALES S3
+   ============================================================================== */
+.evidence-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.evidence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.evidence-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.evidence-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.12);
+}
+
+.evidence-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+    background-color: #f1f5f9;
+}
+
+.evidence-info {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+}
+
+.evidence-info .badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+}
+
+.evidence-s3-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    word-break: break-all;
+}
+
 @media print {
     body * {
         visibility: hidden;
@@ -1517,6 +1601,7 @@ body {
         height: auto;
         min-height: 100vh;
         overflow-y: auto;
+        display: block;
     }
     .app-layout {
         flex-direction: column;
@@ -1531,6 +1616,6 @@ body {
     .main-content {
         height: auto;
         overflow-y: visible;
-        padding: 16px 16px 60px 16px;
+        padding: 16px 16px 100px 16px;
     }
 }

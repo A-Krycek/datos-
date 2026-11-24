@@ -514,6 +514,21 @@
                             </div>
                             <div class="device-summary mt-3" id="deviceSummaryBox"></div>
 
+                            <!-- Evidencias Fotográficas en Amazon S3 (Rúbrica Integrante 1) -->
+                            <div class="evidence-section mt-4" id="traceEvidenceSection">
+                                <div class="evidence-header flex-between">
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.95rem;">Evidencias Digitales en Amazon S3</h4>
+                                        <span class="text-muted font-12">Bucket AWS: <code>ecoraee-evidencias-uide-2026</code></span>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnUploadEvidenceTrigger">
+                                        Subir Foto a S3
+                                    </button>
+                                    <input type="file" id="evidenceFileInput" accept="image/*" style="display: none;">
+                                </div>
+                                <div id="evidenceGalleryList" class="evidence-grid mt-2"></div>
+                            </div>
+
                             <!-- Transición de Estado -->
                             <div class="transition-box mt-4">
                                 <h4>Registrar Nueva Transición de Estado (CP-03)</h4>
