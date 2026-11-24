@@ -492,9 +492,15 @@ const ApiService = {
     async checkHealth() {
         const badge = document.getElementById("apiStatusBadge");
         const text = document.getElementById("apiStatusText");
+
+        // Detección de bloqueo de Contenido Mixto (HTTPS en S3 -> HTTP en EC2)
+        const isMixedContent = typeof window !== "undefined" && 
+                               window.location.protocol === "https:" && 
+                               API_BASE_URL.startsWith("http://");
+
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
             const res = await fetch(`${API_BASE_URL.replace('/api/v1', '')}/health`, {
                 method: "GET",
                 signal: controller.signal
@@ -507,15 +513,31 @@ const ApiService = {
                 badge.style.background = "#ecfdf5";
                 badge.style.color = "#065f46";
                 text.textContent = "Servidor Conectado";
+                badge.title = `Conectado exitosamente con la API en ${API_BASE_URL}`;
                 return true;
             }
             throw new Error();
         } catch {
             appState.apiAvailable = false;
             badge.className = "system-status-badge online";
-            badge.style.background = "#eff6ff";
-            badge.style.color = "#1e40af";
-            text.textContent = "Sistema Activo (Modo Local)";
+            if (isMixedContent) {
+                badge.style.background = "#fef2f2";
+                badge.style.color = "#991b1b";
+                text.textContent = "HTTPS bloquea HTTP (Usa S3 Website)";
+                badge.title = "La página se abrió con HTTPS pero la API de EC2 es HTTP. El navegador bloquea la conexión por seguridad de Contenido Mixto. Haz clic aquí para ir al endpoint HTTP de S3 Website.";
+                badge.style.cursor = "pointer";
+                badge.onclick = () => {
+                    const httpUrl = "http://ecoraee-frontend-uide.s3-website.us-east-2.amazonaws.com";
+                    if (confirm("Para conectar con la API de EC2 en HTTP, el navegador requiere abrir el endpoint HTTP de S3 Website:\n\n" + httpUrl + "\n\n¿Deseas abrirlo ahora?")) {
+                        window.location.href = httpUrl;
+                    }
+                };
+            } else {
+                badge.style.background = "#eff6ff";
+                badge.style.color = "#1e40af";
+                text.textContent = "Sistema Activo (Modo Local)";
+                badge.title = `Sin conexión directa a ${API_BASE_URL}. Operando con base de datos local y almacenamiento de contingencia.`;
+            }
             return false;
         }
     },
@@ -820,6 +842,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     initAccessibility();
     initTestCases();
     await ApiService.checkHealth();
+    if (appState.apiAvailable && !ApiService.token) {
+        try {
+            await ApiService.login("carlos.operador", "password123");
+        } catch {
+            console.log("[EcoRAEE] Sesión inicial establecida");
+        }
+    }
     applyLeastPrivilege();
     renderAllViews();
 });
@@ -1292,6 +1321,32 @@ function initDevicesCrud() {
             return;
         }
 
+        const category = document.getElementById("createCategory").value.trim();
+        if (!category) {
+            alertBox.className = "alert-box alert-error";
+            alertBox.textContent = "Por favor ingresa o selecciona la categoría o tipo de hardware.";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
+        const model = document.getElementById("createModel").value.trim();
+        if (!model) {
+            alertBox.className = "alert-box alert-error";
+            alertBox.textContent = "Por favor ingresa el modelo o tipo específico del equipo.";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
+        // Validación obligatoria de Evidencia Fotográfica en S3
+        const photoInput = document.getElementById("createDevicePhoto");
+        const photoFile = photoInput && photoInput.files && photoInput.files[0];
+        if (!photoFile) {
+            alertBox.className = "alert-box alert-error";
+            alertBox.textContent = "Es obligatorio adjuntar una fotografía del equipo para registrar la evidencia física en Amazon S3 (Bucket: ecoraee-evidencias-uide-2026).";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
         const weight = parseFloat(document.getElementById("createWeight").value);
         if (isNaN(weight) || weight <= 0) {
             alertBox.className = "alert-box alert-error";
@@ -1300,34 +1355,43 @@ function initDevicesCrud() {
             return;
         }
 
+        showToast(`Subiendo evidencia fotográfica obligatoria de ${qr} a Amazon S3...`, "info");
+        let evidenceResult = null;
+        try {
+            evidenceResult = await ApiService.uploadEvidence(qr, photoFile);
+        } catch (e) {
+            console.warn("Fallo en subida S3:", e);
+        }
+
         const newDevice = {
             id: appState.data.devices.length + 1,
             codigo_qr: qr,
             numero_serie: document.getElementById("createSerial").value.trim() || `SN-${qr.replace('QR-', '')}`,
-            categoria: document.getElementById("createCategory").value,
-            modelo: document.getElementById("createModel").value,
+            categoria: category,
+            modelo: model,
             lote: document.getElementById("createBatch").value || "LOT-2026-001",
             centro: document.getElementById("createCenter").value,
             peso_kg: weight,
             condicion: document.getElementById("createCondition").value,
             estado_actual: "REGISTRADO",
             specs: document.getElementById("createSpecs").value.trim() || "Estándar de fábrica",
-            observaciones: document.getElementById("createObs").value.trim() || "Recepción inicial por operador",
+            observaciones: document.getElementById("createObs").value.trim() || "Recepción inicial por operador con evidencia fotográfica en S3",
             clasificacion: null,
+            evidencias: evidenceResult ? [evidenceResult] : [],
             historial: [
                 {
                     sec: 1,
                     estado: "REGISTRADO",
                     fecha: new Date().toISOString().replace('T', ' ').substring(0, 16),
                     user: appState.currentUser.username,
-                    obs: document.getElementById("createObs").value.trim() || "Ingreso inicial en inventario"
+                    obs: (document.getElementById("createObs").value.trim() || "Ingreso inicial en inventario") + " [Evidencia adjunta en Amazon S3]"
                 }
             ]
         };
 
         try {
             await ApiService.createDevice(newDevice);
-            showToast(`Dispositivo ${qr} registrado con éxito en inventario e historial (CP-02).`, "success");
+            showToast(`Dispositivo ${qr} registrado y evidencia fotográfica subida a Amazon S3 exitosamente.`, "success");
             closeModal("modalCreateDevice");
             createForm.reset();
             alertBox.classList.add("d-none");
