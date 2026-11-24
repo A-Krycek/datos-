@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Asegurar que el path raíz del proyecto esté en sys.path para importaciones
 root_path = Path(__file__).resolve().parent.parent.parent
@@ -51,9 +52,10 @@ app.include_router(evidences.router, prefix=settings.API_V1_STR)
 @app.get("/", tags=["Sistema"])
 def root():
     return {
-        "sistema": "EcoRAEE Cloud API",
+        "sistema": "EcoRAEE Cloud API - UIDE / ASU",
         "version": "1.0.0",
         "estado": "OPERATIVO",
+        "app_frontend": "/app",
         "documentacion": "/docs",
         "entorno": settings.ENVIRONMENT
     }
@@ -62,3 +64,8 @@ def root():
 def health_check():
     """Endpoint de comprobación de salud para el balanceador ALB de AWS (RNF-02)."""
     return {"status": "healthy"}
+
+# Montaje de la SPA de EcoRAEE con Branding UIDE
+vanilla_frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend" / "vanilla"
+if vanilla_frontend_dir.exists():
+    app.mount("/app", StaticFiles(directory=str(vanilla_frontend_dir), html=True), name="frontend_app")
