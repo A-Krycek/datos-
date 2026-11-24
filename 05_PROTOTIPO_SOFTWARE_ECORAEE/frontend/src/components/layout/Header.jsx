@@ -12,15 +12,17 @@ export const Header = ({ onNavigateToProfile }) => {
     <header className="app-header">
       <div className="header-container">
         <div className="brand">
-          <div className="logo-icon">
-            <svg className="svg-icon-lg" viewBox="0 0 24 24">
-              <path d="M4 12v-3a3 3 0 0 1 3-3h13m-3 -3l3 3l-3 3" />
-              <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" />
-            </svg>
+          <div className="logo-icon uide-brand-shield">
+            <img src="/uide_icon.png" alt="UIDE" style={{ width: 32, height: 32, objectFit: "contain" }} />
           </div>
           <div>
-            <h1>EcoRAEE Cloud</h1>
-            <span className="subtitle">UIDE / Arizona State University — Trazabilidad Integral de RAEE</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h1 style={{ color: "var(--brand-primary)", fontWeight: 800 }}>EcoRAEE Cloud</h1>
+              <span style={{ backgroundColor: "var(--brand-gold)", color: "#4A0025", fontSize: "0.68rem", fontWeight: 800, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase" }}>
+                UIDE • Powered by ASU
+              </span>
+            </div>
+            <span className="subtitle">Universidad Internacional del Ecuador — Trazabilidad Integral de RAEE</span>
           </div>
         </div>
 
