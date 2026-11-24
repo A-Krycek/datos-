@@ -103,8 +103,7 @@ def crear_lote(
            VALUES (?, ?, ?, ?, ?)""",
         (lote_in.codigo_lote, lote_in.id_generador, lote_in.cantidad_declarada, lote_in.peso_declarado_kg, lote_in.observaciones)
     )
-    new_id = cursor.lastrowid
-    cursor.execute("SELECT * FROM lote WHERE id_lote = ?", (new_id,))
+    cursor.execute("SELECT * FROM lote WHERE codigo_lote = ?", (lote_in.codigo_lote,))
     return dict(cursor.fetchone())
 
 # ==============================================================================
@@ -221,7 +220,9 @@ def registrar_dispositivo(
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
         (device_in.codigo_qr, device_in.numero_serie, device_in.id_modelo, device_in.id_lote, device_in.id_condicion, device_in.peso_kg, device_in.observaciones, device_in.id_centro_inicial)
     )
-    new_id = cursor.lastrowid
+    cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (device_in.codigo_qr,))
+    row_new = cursor.fetchone()
+    new_id = row_new["id_dispositivo"] if isinstance(row_new, dict) else (row_new[0] if row_new else None)
 
     cursor.execute(
         """INSERT INTO historial_estado (id_dispositivo, numero_secuencia, id_estado, id_usuario, observacion)
