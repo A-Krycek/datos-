@@ -2,7 +2,11 @@ import hashlib
 import hmac
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
-from jose import JWTError, jwt
+try:
+    from jose import JWTError, jwt
+except ImportError:
+    import jwt
+    from jwt import PyJWTError as JWTError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 

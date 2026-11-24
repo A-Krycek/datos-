@@ -54,16 +54,30 @@ class HistorialEstadoItem(BaseModel):
 class DispositivoResponse(BaseModel):
     id_dispositivo: int
     codigo_qr: str
-    numero_serie: Optional[str]
+    numero_serie: Optional[str] = None
     id_modelo: int
     id_condicion: int
     peso_kg: float
     fecha_registro: datetime
-    observaciones: Optional[str]
+    observaciones: Optional[str] = None
+    id_centro_actual: Optional[int] = 1
+    activo: Optional[bool] = True
     historial: List[HistorialEstadoItem] = []
 
     class Config:
         from_attributes = True
+
+class DispositivoPage(BaseModel):
+    items: List[DispositivoResponse]
+    total: int
+    limit: int
+    offset: int
+
+class HistorialTrazabilidadResponse(BaseModel):
+    id_dispositivo: int
+    codigo_qr: str
+    total_eventos: int
+    historial: List[HistorialEstadoItem]
 
 class CambioEstadoRequest(BaseModel):
     id_estado_nuevo: int = Field(..., example=3)

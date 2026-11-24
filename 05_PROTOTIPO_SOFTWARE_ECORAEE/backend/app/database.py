@@ -157,6 +157,7 @@ def init_db():
             peso_kg DOUBLE PRECISION NOT NULL,
             observaciones TEXT,
             id_centro_actual INT DEFAULT 1,
+            activo INT DEFAULT 1,
             fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -192,6 +193,10 @@ def init_db():
         );
         """
         cursor.executescript(ddl)
+        try:
+            cursor.execute("ALTER TABLE dispositivo ADD COLUMN activo INT DEFAULT 1")
+        except Exception:
+            pass
         conn.commit()
 
         # Semilla inicial en RDS si está vacío
@@ -292,6 +297,7 @@ def init_db():
             peso_kg REAL NOT NULL,
             observaciones TEXT,
             id_centro_actual INTEGER DEFAULT 1,
+            activo INTEGER DEFAULT 1,
             fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -326,6 +332,10 @@ def init_db():
             observaciones TEXT
         );
         """)
+        try:
+            cursor.execute("ALTER TABLE dispositivo ADD COLUMN activo INTEGER DEFAULT 1")
+        except Exception:
+            pass
         conn.commit()
 
         cursor.execute("SELECT COUNT(*) as total FROM centro_acopio")

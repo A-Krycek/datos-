@@ -1,12 +1,13 @@
 import sqlite3
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, Union, Literal
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Response
 
 try:
     from backend.app.database import get_db
     from backend.app.schemas.dtos import (
         DispositivoCreate, DispositivoUpdate, DispositivoResponse, CambioEstadoRequest,
+        DispositivoPage, HistorialTrazabilidadResponse,
         LoteCreate, LoteResponse, CentroResponse, EvaluacionCreate, DestinoFinalCreate,
         StatsDashboardResponse
     )
@@ -15,6 +16,7 @@ except ImportError:
     from app.database import get_db
     from app.schemas.dtos import (
         DispositivoCreate, DispositivoUpdate, DispositivoResponse, CambioEstadoRequest,
+        DispositivoPage, HistorialTrazabilidadResponse,
         LoteCreate, LoteResponse, CentroResponse, EvaluacionCreate, DestinoFinalCreate,
         StatsDashboardResponse
     )
@@ -196,17 +198,41 @@ def _obtener_dispositivo_completo(cursor, id_dispositivo: int):
     if not row:
         return None
     disp = dict(row)
-    cursor.execute("SELECT * FROM historial_estado WHERE id_dispositivo = ? ORDER BY numero_secuencia ASC", (id_dispositivo,))
+    cursor.execute(
+        "SELECT * FROM historial_estado WHERE id_dispositivo = ? ORDER BY numero_secuencia ASC",
+        (id_dispositivo,)
+    )
     disp["historial"] = [dict(h) for h in cursor.fetchall()]
+    if "activo" not in disp or disp["activo"] is None:
+        disp["activo"] = True
+    else:
+        disp["activo"] = bool(disp["activo"])
     return disp
 
-@router.post("", response_model=DispositivoResponse, status_code=status.HTTP_201_CREATED)
+def _resolver_id_dispositivo(cursor, identifier: str) -> Optional[int]:
+    """Resuelve id_dispositivo a partir de un ID numérico o un código QR."""
+    if identifier.isdigit():
+        cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE id_dispositivo = ?", (int(identifier),))
+        row = cursor.fetchone()
+        if row:
+            return row["id_dispositivo"] if isinstance(row, dict) else row[0]
+    cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (identifier,))
+    row = cursor.fetchone()
+    if row:
+        return row["id_dispositivo"] if isinstance(row, dict) else row[0]
+    return None
+
+@router.post("", response_model=DispositivoResponse, status_code=status.HTTP_201_CREATED, summary="Registrar nuevo dispositivo")
 def registrar_dispositivo(
     device_in: DispositivoCreate,
+    response: Response,
     db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(RoleChecker(["ROL_ADMIN", "ROL_OPERADOR"]))
 ):
-    """Registra un nuevo dispositivo con código QR único mediante SQL nativo."""
+    """
+    Registra un nuevo dispositivo con código QR único mediante SQL nativo.
+    Retorna 201 Created con el encabezado Location conforme al contrato REST.
+    """
     cursor = db.cursor()
     cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (device_in.codigo_qr,))
     if cursor.fetchone():
@@ -216,8 +242,8 @@ def registrar_dispositivo(
         )
 
     cursor.execute(
-        """INSERT INTO dispositivo (codigo_qr, numero_serie, id_modelo, id_lote, id_condicion, peso_kg, observaciones, id_centro_actual)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO dispositivo (codigo_qr, numero_serie, id_modelo, id_lote, id_condicion, peso_kg, observaciones, id_centro_actual, activo)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)""",
         (device_in.codigo_qr, device_in.numero_serie, device_in.id_modelo, device_in.id_lote, device_in.id_condicion, device_in.peso_kg, device_in.observaciones, device_in.id_centro_inicial)
     )
     cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (device_in.codigo_qr,))
@@ -229,88 +255,189 @@ def registrar_dispositivo(
            VALUES (?, 1, 1, ?, 'Ingreso inicial registrado en recepción')""",
         (new_id, current_user["user_id"])
     )
+    response.headers["Location"] = f"/api/v1/devices/{new_id}"
     return _obtener_dispositivo_completo(cursor, new_id)
 
-@router.get("", response_model=List[DispositivoResponse])
+@router.get("", response_model=Union[DispositivoPage, List[DispositivoResponse]], summary="Listar dispositivos con filtros y paginación")
 def listar_dispositivos(
-    search: Optional[str] = None,
-    id_condicion: Optional[int] = None,
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    search: Optional[str] = Query(None, description="Buscar por coincidencia en código QR o número de serie"),
+    id_condicion: Optional[int] = Query(None, description="Filtrar por condición física"),
+    id_estado: Optional[int] = Query(None, description="Filtrar por estado actual en el historial"),
+    id_centro: Optional[int] = Query(None, description="Filtrar por centro actual"),
+    id_lote: Optional[int] = Query(None, description="Filtrar por lote de origen"),
+    solo_activos: bool = Query(True, description="Excluir dispositivos dados de baja lógica"),
+    sort: str = Query("id_dispositivo", description="Columna para ordenar: id_dispositivo, fecha_registro, peso_kg, codigo_qr"),
+    order: Literal["asc", "desc"] = Query("desc", description="Sentido del ordenamiento"),
+    limit: int = Query(100, ge=1, le=500, description="Cantidad máxima de registros"),
+    offset: int = Query(0, ge=0, description="Desplazamiento para paginación"),
+    paginated: bool = Query(False, description="True para respuesta paginada con metadatos; False para array plano retrocompatible"),
     db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Lista dispositivos registrados mediante SQL nativo con paginación."""
+    """
+    Lista dispositivos registrados mediante SQL parametrizado.
+    Soporta ordenación por lista blanca y preserva compatibilidad con el frontend.
+    """
     cursor = db.cursor()
-    sql = "SELECT id_dispositivo FROM dispositivo WHERE 1=1"
+    where_clauses = ["1=1"]
     params = []
+
+    if solo_activos:
+        where_clauses.append("(d.activo IS NULL OR d.activo = 1)")
     if search:
-        sql += " AND (codigo_qr LIKE ? OR numero_serie LIKE ?)"
+        where_clauses.append("(d.codigo_qr LIKE ? OR d.numero_serie LIKE ?)")
         params.extend([f"%{search}%", f"%{search}%"])
     if id_condicion:
-        sql += " AND id_condicion = ?"
+        where_clauses.append("d.id_condicion = ?")
         params.append(id_condicion)
-    sql += " ORDER BY id_dispositivo DESC LIMIT ? OFFSET ?"
-    limit_val = limit if isinstance(limit, int) else 100
-    offset_val = offset if isinstance(offset, int) else 0
-    params.extend([limit_val, offset_val])
+    if id_centro:
+        where_clauses.append("d.id_centro_actual = ?")
+        params.append(id_centro)
+    if id_lote:
+        where_clauses.append("d.id_lote = ?")
+        params.append(id_lote)
+    if id_estado:
+        where_clauses.append("""
+            d.id_dispositivo IN (
+                SELECT h.id_dispositivo FROM historial_estado h
+                WHERE h.id_estado = ? AND h.fecha_fin IS NULL
+            )
+        """)
+        params.append(id_estado)
 
-    cursor.execute(sql, tuple(params))
-    ids = [r["id_dispositivo"] for r in cursor.fetchall()]
-    return [_obtener_dispositivo_completo(cursor, i) for i in ids]
+    where_sql = " AND ".join(where_clauses)
 
-@router.get("/{codigo_qr}", response_model=DispositivoResponse)
-def consultar_trazabilidad_dispositivo(
-    codigo_qr: str,
+    count_sql = f"SELECT COUNT(*) as total FROM dispositivo d WHERE {where_sql}"
+    cursor.execute(count_sql, tuple(params))
+    count_row = cursor.fetchone()
+    total = count_row["total"] if isinstance(count_row, dict) else count_row[0]
+
+    allowed_sorts = {
+        "id_dispositivo": "d.id_dispositivo",
+        "fecha_registro": "d.fecha_registro",
+        "peso_kg": "d.peso_kg",
+        "codigo_qr": "d.codigo_qr"
+    }
+    sort_col = allowed_sorts.get(sort, "d.id_dispositivo")
+    sort_dir = "ASC" if order.lower() == "asc" else "DESC"
+
+    query_sql = f"""
+        SELECT d.id_dispositivo FROM dispositivo d
+        WHERE {where_sql}
+        ORDER BY {sort_col} {sort_dir}, d.id_dispositivo {sort_dir}
+        LIMIT ? OFFSET ?
+    """
+    query_params = list(params) + [limit, offset]
+    cursor.execute(query_sql, tuple(query_params))
+    ids = [r["id_dispositivo"] if isinstance(r, dict) else r[0] for r in cursor.fetchall()]
+    items = [_obtener_dispositivo_completo(cursor, i) for i in ids]
+
+    if paginated:
+        return DispositivoPage(
+            items=items,
+            total=total,
+            limit=limit,
+            offset=offset
+        )
+    return items
+
+@router.get("/id/{id}", response_model=DispositivoResponse, summary="Consultar dispositivo por ID numérico (PK)")
+def obtener_dispositivo_por_id(
+    id: int = Path(..., gt=0, description="Identificador numérico de clave primaria"),
     db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Consulta la trazabilidad ininterrumpida de un dispositivo por su QR."""
+    """Consulta la ficha y trazabilidad de un dispositivo mediante su ID numérico."""
     cursor = db.cursor()
-    cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (codigo_qr,))
-    row = cursor.fetchone()
-    if not row:
+    disp = _obtener_dispositivo_completo(cursor, id)
+    if not disp:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No se encontró ningún dispositivo con el código QR '{codigo_qr}'."
+            detail=f"Dispositivo con ID '{id}' no encontrado."
         )
-    return _obtener_dispositivo_completo(cursor, row["id_dispositivo"])
+    return disp
 
-@router.put("/{codigo_qr}", response_model=DispositivoResponse)
-def actualizar_dispositivo(
-    codigo_qr: str,
-    update_in: DispositivoUpdate,
+@router.get("/{identifier}", response_model=DispositivoResponse, summary="Consultar dispositivo por Código QR o ID")
+def consultar_trazabilidad_dispositivo(
+    identifier: str = Path(..., description="Código QR o ID numérico del dispositivo"),
+    db: sqlite3.Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Consulta la trazabilidad ininterrumpida de un dispositivo por su QR o ID."""
+    cursor = db.cursor()
+    disp_id = _resolver_id_dispositivo(cursor, identifier)
+    if not disp_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se encontró ningún dispositivo con el identificador '{identifier}'."
+        )
+    return _obtener_dispositivo_completo(cursor, disp_id)
+
+@router.get("/{identifier}/traceability", response_model=HistorialTrazabilidadResponse, summary="Consultar historial de trazabilidad")
+@router.get("/{identifier}/trazabilidad", response_model=HistorialTrazabilidadResponse, include_in_schema=False)
+def consultar_historial_trazabilidad(
+    identifier: str = Path(..., description="Código QR o ID numérico del dispositivo"),
+    db: sqlite3.Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Retorna la secuencia histórica inmutable de trazabilidad de un dispositivo."""
+    cursor = db.cursor()
+    disp_id = _resolver_id_dispositivo(cursor, identifier)
+    if not disp_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se encontró ningún dispositivo con el identificador '{identifier}'."
+        )
+    disp = _obtener_dispositivo_completo(cursor, disp_id)
+    return HistorialTrazabilidadResponse(
+        id_dispositivo=disp["id_dispositivo"],
+        codigo_qr=disp["codigo_qr"],
+        total_eventos=len(disp.get("historial", [])),
+        historial=disp.get("historial", [])
+    )
+
+@router.patch("/{identifier}", response_model=DispositivoResponse, summary="Actualización parcial de campos autorizados")
+def actualizar_dispositivo_parcial(
+    identifier: str = Path(..., description="Código QR o ID numérico del dispositivo"),
+    update_in: DispositivoUpdate = ...,
     db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(RoleChecker(["ROL_ADMIN", "ROL_OPERADOR", "ROL_TECNICO"]))
 ):
-    """Actualiza la información técnica de un dispositivo registrado."""
+    """
+    Modifica únicamente los campos enviados y autorizados (RFC 9110).
+    Rechaza solicitudes vacías y preserva la integridad de la clave primaria y del historial.
+    """
     cursor = db.cursor()
-    cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (codigo_qr,))
-    row = cursor.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado.")
+    disp_id = _resolver_id_dispositivo(cursor, identifier)
+    if not disp_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dispositivo no encontrado.")
 
-    disp_id = row["id_dispositivo"]
+    cambios = update_in.model_dump(exclude_unset=True) if hasattr(update_in, "model_dump") else update_in.dict(exclude_unset=True)
+    if not cambios:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No se enviaron campos válidos para actualizar.")
+
     fields = []
     params = []
-    if update_in.numero_serie is not None:
+    if "numero_serie" in cambios:
         fields.append("numero_serie = ?")
-        params.append(update_in.numero_serie)
-    if update_in.id_modelo is not None:
+        params.append(cambios["numero_serie"])
+    if "id_modelo" in cambios:
         fields.append("id_modelo = ?")
-        params.append(update_in.id_modelo)
-    if update_in.id_condicion is not None:
+        params.append(cambios["id_modelo"])
+    if "id_condicion" in cambios:
         fields.append("id_condicion = ?")
-        params.append(update_in.id_condicion)
-    if update_in.peso_kg is not None:
+        params.append(cambios["id_condicion"])
+    if "peso_kg" in cambios:
+        if cambios["peso_kg"] is not None and cambios["peso_kg"] <= 0:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="El peso debe ser mayor a 0 kg.")
         fields.append("peso_kg = ?")
-        params.append(update_in.peso_kg)
-    if update_in.observaciones is not None:
+        params.append(cambios["peso_kg"])
+    if "observaciones" in cambios:
         fields.append("observaciones = ?")
-        params.append(update_in.observaciones)
-    if update_in.id_centro is not None:
+        params.append(cambios["observaciones"])
+    if "id_centro" in cambios:
         fields.append("id_centro_actual = ?")
-        params.append(update_in.id_centro)
+        params.append(cambios["id_centro"])
 
     if fields:
         sql = f"UPDATE dispositivo SET {', '.join(fields)} WHERE id_dispositivo = ?"
@@ -319,44 +446,67 @@ def actualizar_dispositivo(
 
     return _obtener_dispositivo_completo(cursor, disp_id)
 
-@router.delete("/{codigo_qr}", status_code=status.HTTP_200_OK)
+@router.put("/{identifier}", response_model=DispositivoResponse, summary="Actualizar información técnica de dispositivo")
+def actualizar_dispositivo(
+    identifier: str = Path(..., description="Código QR o ID numérico del dispositivo"),
+    update_in: DispositivoUpdate = ...,
+    db: sqlite3.Connection = Depends(get_db),
+    current_user: dict = Depends(RoleChecker(["ROL_ADMIN", "ROL_OPERADOR", "ROL_TECNICO"]))
+):
+    """Actualiza la información técnica de un dispositivo registrado (retrocompatible)."""
+    return actualizar_dispositivo_parcial(identifier, update_in, db, current_user)
+
+@router.delete("/{identifier}", status_code=status.HTTP_204_NO_CONTENT, summary="Dar de baja lógica un dispositivo (RN-07 / RN-08)")
 def eliminar_dispositivo(
-    codigo_qr: str,
+    identifier: str = Path(..., description="Código QR o ID numérico del dispositivo"),
     db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(RoleChecker(["ROL_ADMIN"]))
 ):
-    """Eliminación física de un dispositivo y su historial asociado."""
+    """
+    Ejecuta la baja lógica del dispositivo garantizando la inmutabilidad de la trazabilidad (RN-07 / RN-08).
+    Marca el dispositivo como inactivo y registra el evento de baja en el historial con HTTP 204.
+    """
     cursor = db.cursor()
-    cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (codigo_qr,))
-    row = cursor.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado.")
+    disp_id = _resolver_id_dispositivo(cursor, identifier)
+    if not disp_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dispositivo no encontrado.")
 
-    disp_id = row["id_dispositivo"]
-    cursor.execute("DELETE FROM historial_estado WHERE id_dispositivo = ?", (disp_id,))
-    cursor.execute("DELETE FROM evaluacion_tecnica WHERE id_dispositivo = ?", (disp_id,))
-    cursor.execute("DELETE FROM destino_final WHERE id_dispositivo = ?", (disp_id,))
-    cursor.execute("DELETE FROM dispositivo WHERE id_dispositivo = ?", (disp_id,))
-    return {"message": f"Dispositivo '{codigo_qr}' eliminado del sistema.", "codigo_qr": codigo_qr}
+    # Marcar activo = 0 en dispositivo
+    cursor.execute("UPDATE dispositivo SET activo = 0 WHERE id_dispositivo = ?", (disp_id,))
 
-@router.post("/{codigo_qr}/transition-state", response_model=DispositivoResponse)
+    # Cerrar fecha_fin del último historial abierto
+    cursor.execute(
+        """UPDATE historial_estado SET fecha_fin = datetime('now') 
+           WHERE id_dispositivo = ? AND fecha_fin IS NULL""",
+        (disp_id,)
+    )
+
+    # Registrar evento inmutable de baja lógica en el historial (id_estado = 8: BAJA_TECNICA / RETIRO)
+    cursor.execute("SELECT COUNT(*) as cant FROM historial_estado WHERE id_dispositivo = ?", (disp_id,))
+    seq = (cursor.fetchone()["cant"] or 0) + 1
+    cursor.execute(
+        """INSERT INTO historial_estado (id_dispositivo, numero_secuencia, id_estado, id_usuario, observacion)
+           VALUES (?, ?, 8, ?, 'Baja técnica autorizada / Retirado del inventario operativo')""",
+        (disp_id, seq, current_user["user_id"])
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.post("/{identifier}/transition-state", response_model=DispositivoResponse, summary="Registrar transición de estado")
 def cambiar_estado_dispositivo(
-    codigo_qr: str,
-    transicion: CambioEstadoRequest,
+    identifier: str = Path(..., description="Código QR o ID numérico del dispositivo"),
+    transicion: CambioEstadoRequest = ...,
     db: sqlite3.Connection = Depends(get_db),
     current_user: dict = Depends(RoleChecker(["ROL_ADMIN", "ROL_TECNICO", "ROL_LOGISTICA"]))
 ):
     """Registra una transición de estado en el ciclo de vida del equipo (RN-01 / RN-02)."""
     cursor = db.cursor()
-    cursor.execute("SELECT id_dispositivo FROM dispositivo WHERE codigo_qr = ?", (codigo_qr,))
-    row = cursor.fetchone()
-    if not row:
+    disp_id = _resolver_id_dispositivo(cursor, identifier)
+    if not disp_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Dispositivo '{codigo_qr}' no encontrado."
+            detail=f"Dispositivo '{identifier}' no encontrado."
         )
 
-    disp_id = row["id_dispositivo"]
     # Cerrar fecha_fin del último historial si estaba abierto
     cursor.execute(
         """UPDATE historial_estado SET fecha_fin = datetime('now') 
