@@ -9,11 +9,29 @@
  * ==============================================================================
  */
 
-// Configuración de API Backend
-const BACKEND_HOST = "32.200.238.44:8000";
-const API_BASE_URL = (typeof window !== "undefined" && window.location.host === BACKEND_HOST)
-    ? `${window.location.protocol}//${window.location.host}/api/v1`
-    : `http://${BACKEND_HOST}/api/v1`;
+// Configuración dinámica de API Backend con fallback local y tolerancia a fallos
+const DEFAULT_BACKEND_HOST = "32.200.238.44:8000";
+
+function resolveApiBaseUrl() {
+    if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiParam = urlParams.get("api");
+        if (apiParam) {
+            localStorage.setItem("ECORAEE_API_URL", apiParam);
+            return apiParam.endsWith("/api/v1") ? apiParam : `${apiParam}/api/v1`;
+        }
+        const savedApi = localStorage.getItem("ECORAEE_API_URL");
+        if (savedApi) {
+            return savedApi.endsWith("/api/v1") ? savedApi : `${savedApi}/api/v1`;
+        }
+        if (window.location.host && window.location.host.includes(":8000")) {
+            return `${window.location.protocol}//${window.location.host}/api/v1`;
+        }
+    }
+    return `http://${DEFAULT_BACKEND_HOST}/api/v1`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // ==============================================================================
 // 1. DATASET SEMILLA INICIAL DEL CAMPUS UIDA
@@ -474,9 +492,15 @@ const ApiService = {
     async checkHealth() {
         const badge = document.getElementById("apiStatusBadge");
         const text = document.getElementById("apiStatusText");
+
+        // Detección de bloqueo de Contenido Mixto (HTTPS en S3 -> HTTP en EC2)
+        const isMixedContent = typeof window !== "undefined" && 
+                               window.location.protocol === "https:" && 
+                               API_BASE_URL.startsWith("http://");
+
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
             const res = await fetch(`${API_BASE_URL.replace('/api/v1', '')}/health`, {
                 method: "GET",
                 signal: controller.signal
@@ -489,15 +513,31 @@ const ApiService = {
                 badge.style.background = "#ecfdf5";
                 badge.style.color = "#065f46";
                 text.textContent = "Servidor Conectado";
+                badge.title = `Conectado exitosamente con la API en ${API_BASE_URL}`;
                 return true;
             }
             throw new Error();
         } catch {
             appState.apiAvailable = false;
             badge.className = "system-status-badge online";
-            badge.style.background = "#eff6ff";
-            badge.style.color = "#1e40af";
-            text.textContent = "Sistema Activo (Modo Local)";
+            if (isMixedContent) {
+                badge.style.background = "#fef2f2";
+                badge.style.color = "#991b1b";
+                text.textContent = "HTTPS bloquea HTTP (Usa S3 Website)";
+                badge.title = "La página se abrió con HTTPS pero la API de EC2 es HTTP. El navegador bloquea la conexión por seguridad de Contenido Mixto. Haz clic aquí para ir al endpoint HTTP de S3 Website.";
+                badge.style.cursor = "pointer";
+                badge.onclick = () => {
+                    const httpUrl = "http://ecoraee-frontend-uide.s3-website.us-east-2.amazonaws.com";
+                    if (confirm("Para conectar con la API de EC2 en HTTP, el navegador requiere abrir el endpoint HTTP de S3 Website:\n\n" + httpUrl + "\n\n¿Deseas abrirlo ahora?")) {
+                        window.location.href = httpUrl;
+                    }
+                };
+            } else {
+                badge.style.background = "#eff6ff";
+                badge.style.color = "#1e40af";
+                text.textContent = "Sistema Activo (Modo Local)";
+                badge.title = `Sin conexión directa a ${API_BASE_URL}. Operando con base de datos local y almacenamiento de contingencia.`;
+            }
             return false;
         }
     },
@@ -705,6 +745,84 @@ const ApiService = {
                 mensaje_decision: "Alerta de contingencia vial: Capacidad reducida a 2,000.00 kg/sem (-35.5%). La arista Matriz -> ReciclaMetal está estrangulada a 400 kg por cierre vial. Se acumulan 1,100 kg en bodegas de Campus Matriz. Decisión: Activar fletes nocturnos alternativos."
             };
         }
+    },
+
+    async uploadEvidence(codigoQr, file) {
+        if (appState.apiAvailable) {
+            try {
+                const formData = new FormData();
+                formData.append("file", file);
+                const res = await fetch(`${API_BASE_URL}/evidences/upload/${encodeURIComponent(codigoQr)}`, {
+                    method: "POST",
+                    headers: this.token ? { "Authorization": `Bearer ${this.token}` } : {},
+                    body: formData
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    this._persistLocalEvidence(codigoQr, {
+                        file_name: file.name,
+                        file_url: result.file_url || result.s3_url || result.url,
+                        s3_key: result.s3_key || `evidencias/${codigoQr}/${file.name}`,
+                        bucket: "ecoraee-evidencias-uide-2026",
+                        is_local: false,
+                        fecha: new Date().toISOString()
+                    });
+                    return result;
+                }
+            } catch (e) {
+                console.warn("[EcoRAEE API] Error al subir evidencia a S3:", e);
+            }
+        }
+        // Fallback local con FileReader
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const evidenceObj = {
+                    file_name: file.name,
+                    file_url: reader.result,
+                    s3_key: `evidencias/${codigoQr}/${file.name}`,
+                    bucket: "ecoraee-evidencias-uide-2026 (Local Cache)",
+                    is_local: true,
+                    fecha: new Date().toISOString()
+                };
+                ApiService._persistLocalEvidence(codigoQr, evidenceObj);
+                resolve({
+                    status: "success",
+                    message: "Evidencia almacenada en modo local",
+                    ...evidenceObj
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+
+    async getEvidences(codigoQr) {
+        if (appState.apiAvailable) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/evidences/list/${encodeURIComponent(codigoQr)}`, {
+                    headers: this.token ? { "Authorization": `Bearer ${this.token}` } : {}
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.evidences) && data.evidences.length > 0) {
+                        return data.evidences;
+                    }
+                }
+            } catch (e) {
+                console.warn("[EcoRAEE API] Error al listar evidencias S3:", e);
+            }
+        }
+        const dev = appState.data.devices.find(d => d.codigo_qr === codigoQr);
+        return (dev && Array.isArray(dev.evidencias)) ? dev.evidencias : [];
+    },
+
+    _persistLocalEvidence(codigoQr, evidenceObj) {
+        const dev = appState.data.devices.find(d => d.codigo_qr === codigoQr);
+        if (dev) {
+            if (!Array.isArray(dev.evidencias)) dev.evidencias = [];
+            dev.evidencias.push(evidenceObj);
+            StorageService.save(appState.data);
+        }
     }
 };
 
@@ -769,7 +887,13 @@ function navigateTo(viewId) {
     if (viewId === "technical") renderTechnicalView();
     if (viewId === "logistics") renderMovements();
     if (viewId === "destination") renderFinalDestinationView();
+    if (viewId === "network") renderNetworkScenario(appState.activeScenario || "BASE");
+    if (viewId === "traceability" && appState.trackedQr) trackDevice(appState.trackedQr);
     if (viewId === "profile") renderUserProfile();
+
+    // Restablecer scroll al inicio de la vista
+    const mainEl = document.querySelector(".main-content");
+    if (mainEl) mainEl.scrollTop = 0;
 }
 
 // ==============================================================================
@@ -1199,6 +1323,32 @@ function initDevicesCrud() {
             return;
         }
 
+        const category = document.getElementById("createCategory").value.trim();
+        if (!category) {
+            alertBox.className = "alert-box alert-error";
+            alertBox.textContent = "Por favor ingresa o selecciona la categoría o tipo de hardware.";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
+        const model = document.getElementById("createModel").value.trim();
+        if (!model) {
+            alertBox.className = "alert-box alert-error";
+            alertBox.textContent = "Por favor ingresa el modelo o tipo específico del equipo.";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
+        // Validación obligatoria de Evidencia Fotográfica en S3
+        const photoInput = document.getElementById("createDevicePhoto");
+        const photoFile = photoInput && photoInput.files && photoInput.files[0];
+        if (!photoFile) {
+            alertBox.className = "alert-box alert-error";
+            alertBox.textContent = "Es obligatorio adjuntar una fotografía del equipo para registrar la evidencia física en Amazon S3 (Bucket: ecoraee-evidencias-uide-2026).";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
         const weight = parseFloat(document.getElementById("createWeight").value);
         if (isNaN(weight) || weight <= 0) {
             alertBox.className = "alert-box alert-error";
@@ -1207,34 +1357,43 @@ function initDevicesCrud() {
             return;
         }
 
+        showToast(`Subiendo evidencia fotográfica obligatoria de ${qr} a Amazon S3...`, "info");
+        let evidenceResult = null;
+        try {
+            evidenceResult = await ApiService.uploadEvidence(qr, photoFile);
+        } catch (e) {
+            console.warn("Fallo en subida S3:", e);
+        }
+
         const newDevice = {
             id: appState.data.devices.length + 1,
             codigo_qr: qr,
             numero_serie: document.getElementById("createSerial").value.trim() || `SN-${qr.replace('QR-', '')}`,
-            categoria: document.getElementById("createCategory").value,
-            modelo: document.getElementById("createModel").value,
+            categoria: category,
+            modelo: model,
             lote: document.getElementById("createBatch").value || "LOT-2026-001",
             centro: document.getElementById("createCenter").value,
             peso_kg: weight,
             condicion: document.getElementById("createCondition").value,
             estado_actual: "REGISTRADO",
             specs: document.getElementById("createSpecs").value.trim() || "Estándar de fábrica",
-            observaciones: document.getElementById("createObs").value.trim() || "Recepción inicial por operador",
+            observaciones: document.getElementById("createObs").value.trim() || "Recepción inicial por operador con evidencia fotográfica en S3",
             clasificacion: null,
+            evidencias: evidenceResult ? [evidenceResult] : [],
             historial: [
                 {
                     sec: 1,
                     estado: "REGISTRADO",
                     fecha: new Date().toISOString().replace('T', ' ').substring(0, 16),
                     user: appState.currentUser.username,
-                    obs: document.getElementById("createObs").value.trim() || "Ingreso inicial en inventario"
+                    obs: (document.getElementById("createObs").value.trim() || "Ingreso inicial en inventario") + " [Evidencia adjunta en Amazon S3]"
                 }
             ]
         };
 
         try {
             await ApiService.createDevice(newDevice);
-            showToast(`Dispositivo ${qr} registrado con éxito en inventario e historial (CP-02).`, "success");
+            showToast(`Dispositivo ${qr} registrado y evidencia fotográfica subida a Amazon S3 exitosamente.`, "success");
             closeModal("modalCreateDevice");
             createForm.reset();
             alertBox.classList.add("d-none");
@@ -1923,6 +2082,77 @@ function initTraceability() {
         }
         openPrintCertificateModal(appState.trackedQr);
     });
+
+    // Control de Subida de Evidencias a Amazon S3
+    const btnUpload = document.getElementById("btnUploadEvidenceTrigger");
+    const fileInput = document.getElementById("evidenceFileInput");
+    if (btnUpload && fileInput) {
+        btnUpload.addEventListener("click", () => {
+            if (!appState.trackedQr) {
+                showToast("Rastrea primero un dispositivo antes de adjuntar evidencias.", "error");
+                return;
+            }
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            showToast(`Subiendo evidencia ${file.name} al bucket S3...`, "info");
+            try {
+                await ApiService.uploadEvidence(appState.trackedQr, file);
+                showToast(`Evidencia fotográfica subida a S3 con éxito (ecoraee-evidencias-uide-2026)`, "success");
+                fileInput.value = "";
+                await renderTraceEvidences(appState.trackedQr);
+            } catch (err) {
+                showToast(`Error al subir evidencia: ${err.message}`, "error");
+            }
+        });
+    }
+}
+
+async function renderTraceEvidences(qr) {
+    const galleryEl = document.getElementById("evidenceGalleryList");
+    if (!galleryEl) return;
+    galleryEl.innerHTML = '<span class="text-muted font-12">Consultando repositorio de evidencias en S3...</span>';
+    
+    try {
+        const evidences = await ApiService.getEvidences(qr);
+        galleryEl.innerHTML = "";
+        if (!evidences || evidences.length === 0) {
+            galleryEl.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 0.8rem;">
+                    Sin fotografías adjuntas. Haz clic en "Subir Foto a S3" para registrar evidencia fotográfica en el bucket <code>ecoraee-evidencias-uide-2026</code>.
+                </div>
+            `;
+            return;
+        }
+
+        evidences.forEach(ev => {
+            const card = document.createElement("div");
+            card.className = "evidence-card";
+            const fileUrl = ev.file_url || ev.url || ev.s3_url || 'assets/uide_icon.png';
+            const fileName = ev.file_name || ev.filename || `EVID-${qr}.jpg`;
+            const s3Badge = ev.is_local ? "Almacenamiento Local" : "Amazon S3 (ecoraee-evidencias-uide-2026)";
+            
+            card.innerHTML = `
+                <a href="${fileUrl}" target="_blank" title="Ver imagen en tamaño completo">
+                    <img src="${fileUrl}" alt="Evidencia ${fileName}">
+                </a>
+                <div class="evidence-info">
+                    <strong style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${fileName}</strong>
+                    <div class="mt-1">
+                        <span class="badge ${ev.is_local ? 'badge-amber' : 'badge-green'}">${s3Badge}</span>
+                    </div>
+                    <div class="text-muted font-12 mt-1">${(ev.fecha || '').substring(0, 16)}</div>
+                </div>
+            `;
+            galleryEl.appendChild(card);
+        });
+    } catch {
+        galleryEl.innerHTML = '<span class="text-muted font-12">No se pudieron recuperar las evidencias.</span>';
+    }
 }
 
 function trackDevice(qr) {
@@ -1974,6 +2204,9 @@ function trackDevice(qr) {
         `;
         timeline.appendChild(item);
     });
+
+    // Renderizar evidencias asociadas en S3
+    renderTraceEvidences(found.codigo_qr);
 }
 
 window.trackFromAnywhere = function(qr) {

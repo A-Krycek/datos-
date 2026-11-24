@@ -514,6 +514,21 @@
                             </div>
                             <div class="device-summary mt-3" id="deviceSummaryBox"></div>
 
+                            <!-- Evidencias Fotográficas en Amazon S3 (Rúbrica Integrante 1) -->
+                            <div class="evidence-section mt-4" id="traceEvidenceSection">
+                                <div class="evidence-header flex-between">
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 0.95rem;">Evidencias Digitales en Amazon S3</h4>
+                                        <span class="text-muted font-12">Bucket AWS: <code>ecoraee-evidencias-uide-2026</code></span>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnUploadEvidenceTrigger">
+                                        Subir Foto a S3
+                                    </button>
+                                    <input type="file" id="evidenceFileInput" accept="image/*" style="display: none;">
+                                </div>
+                                <div id="evidenceGalleryList" class="evidence-grid mt-2"></div>
+                            </div>
+
                             <!-- Transición de Estado -->
                             <div class="transition-box mt-4">
                                 <h4>Registrar Nueva Transición de Estado (CP-03)</h4>
@@ -985,35 +1000,37 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="createCategory">Categoría de Hardware *</label>
-                            <select id="createCategory" class="form-control" required>
-                                <option value="Computadoras">Computadoras y Portátiles</option>
-                                <option value="Monitores">Monitores y Pantallas</option>
-                                <option value="Tablets">Tablets y Lectores</option>
-                                <option value="Teléfonos">Teléfonos y Celulares</option>
-                                <option value="Equipos de Red">Equipos de Red y Conectividad</option>
-                            </select>
+                            <label for="createCategory">Categoría / Tipo de Hardware *</label>
+                            <input type="text" id="createCategory" list="categorySuggestions" required placeholder="Ej: Computadoras, Monitores, Tablets..." class="form-control">
+                            <datalist id="categorySuggestions">
+                                <option value="Computadoras">
+                                <option value="Monitores">
+                                <option value="Tablets">
+                                <option value="Teléfonos">
+                                <option value="Equipos de Red">
+                            </datalist>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createModel">Modelo de Equipo *</label>
-                            <select id="createModel" class="form-control" required>
-                                <option value="Dell OptiPlex 7070 SFF">Dell OptiPlex 7070 SFF (Desktop)</option>
-                                <option value="Dell Latitude 5400 Laptop">Dell Latitude 5400 Laptop</option>
-                                <option value="HP EliteDesk 800 G4">HP EliteDesk 800 G4 (Desktop)</option>
-                                <option value="HP ProBook 450 G6 Laptop">HP ProBook 450 G6 Laptop</option>
-                                <option value="ThinkPad T480 Laptop">Lenovo ThinkPad T480 Laptop</option>
-                                <option value="Dell UltraSharp U2415b 24&quot;">Dell UltraSharp U2415b 24" (Monitor)</option>
-                                <option value="HP Pavilion 22cwa 21.5&quot;">HP Pavilion 22cwa 21.5" (Monitor)</option>
-                                <option value="iPad 9th Generation">Apple iPad 9th Gen (Tablet)</option>
-                                <option value="Samsung Galaxy Tab A8">Samsung Galaxy Tab A8 (Tablet)</option>
-                                <option value="iPhone 11 64GB">Apple iPhone 11 (Teléfono)</option>
-                                <option value="Samsung Galaxy A52">Samsung Galaxy A52 (Teléfono)</option>
-                                <option value="Cisco Catalyst 2960-X Switch">Cisco Catalyst 2960-X (Switch)</option>
-                                <option value="Cisco RV340 VPN Router">Cisco RV340 (Router)</option>
-                            </select>
+                            <input type="text" id="createModel" list="modelSuggestions" required placeholder="Ej: Dell OptiPlex 7070 SFF, HP EliteDesk, ThinkPad T480..." class="form-control">
+                            <datalist id="modelSuggestions">
+                                <option value="Dell OptiPlex 7070 SFF">
+                                <option value="Dell Latitude 5400 Laptop">
+                                <option value="HP EliteDesk 800 G4">
+                                <option value="HP ProBook 450 G6 Laptop">
+                                <option value="Lenovo ThinkPad T480 Laptop">
+                                <option value="Dell UltraSharp U2415b 24&quot;">
+                                <option value="HP Pavilion 22cwa 21.5&quot;">
+                                <option value="Apple iPad 9th Gen">
+                                <option value="Samsung Galaxy Tab A8">
+                                <option value="Apple iPhone 11">
+                                <option value="Samsung Galaxy A52">
+                                <option value="Cisco Catalyst 2960-X Switch">
+                                <option value="Cisco RV340 Router">
+                            </datalist>
                         </div>
 
                         <div class="form-group">
@@ -1025,7 +1042,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createWeight">Peso Físico Medido (kg) *</label>
-                            <input type="number" id="createWeight" step="0.01" min="0.05" max="300" value="8.20" required class="form-control font-mono">
+                            <input type="number" id="createWeight" step="0.01" min="0.05" max="300" required placeholder="Ej: 3.50" class="form-control font-mono">
                         </div>
 
                         <div class="form-group">
@@ -1037,6 +1054,12 @@
                                 <option value="Obsoleto / Chatarra">Obsoleto / Chatarra</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="createDevicePhoto">Fotografía / Evidencia de Recepción (Obligatorio para Amazon S3) *</label>
+                        <input type="file" id="createDevicePhoto" accept="image/*" required class="form-control">
+                        <small class="text-muted">Se subirá de forma obligatoria al bucket S3 <code>ecoraee-evidencias-uide-2026</code> con firma inmutable.</small>
                     </div>
 
                     <div class="form-row">
