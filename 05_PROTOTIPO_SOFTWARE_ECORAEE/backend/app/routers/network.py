@@ -12,7 +12,7 @@ router = APIRouter(prefix="/network", tags=["Optimización Matemática y Flujo L
 
 @router.get("/optimize-flow", response_model=NetworkOptimizationResponse)
 def optimizar_flujo_red(
-    escenario: Literal["BASE", "CONTINGENCIA"] = Query("BASE", description="Escenario de simulacion: BASE o CONTINGENCIA"),
+    escenario: Literal["BASE", "CONTINGENCIA"] = Query("BASE", description="Escenario de simulacion"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
