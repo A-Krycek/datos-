@@ -1511,6 +1511,73 @@ body {
     font-weight: 600;
 }
 
+/* ==============================================================================
+   EVIDENCIAS DIGITALES S3
+   ============================================================================== */
+.evidence-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.evidence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.evidence-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.evidence-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.12);
+}
+
+.evidence-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+    background-color: #f1f5f9;
+}
+
+.evidence-info {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+}
+
+.evidence-info .badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+}
+
+.evidence-s3-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    word-break: break-all;
+}
+
 @media print {
     body * {
         visibility: hidden;
