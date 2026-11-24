@@ -101,6 +101,27 @@ export const ApiService = {
       return { success: true, user: foundUser, fromBackend: false };
     }
     return { success: false, error: "Credenciales institucionales incorrectas" };
+  },
+
+  async uploadEvidence(codigoQr, file) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${API_BASE_URL}/evidences/upload/${encodeURIComponent(codigoQr)}`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, data };
+      }
+      return { success: false, error: "Error al cargar evidencia en S3" };
+    } catch (e) {
+      console.warn("Fallo de conexión al subir evidencia a S3:", e);
+      return { success: false, error: e.message };
+    }
   }
 };
 
