@@ -1,0 +1,53 @@
+================================================================================
+UNIVERSIDAD INTERNACIONAL DEL ECUADOR (UIDE) - POWERED BY ASU
+FACULTAD DE INGENIERIA Y CIENCIAS APLICADAS
+CARRERA DE TECNOLOGIAS DE LA INFORMACION
+SISTEMAS DE GESTION DE BASES DE DATOS (05-SIN-A)
+PROYECTO INTEGRADOR - FASE 3: LOGICA DE NEGOCIO Y OBJETOS PROGRAMABLES
+================================================================================
+
+EQUIPO DE TRABAJO: GRUPO 8
+INTEGRANTES:
+- Daniel Fernando Pazmiño Mera
+- Matias Nicolas Herrera Cueva
+- Ihair Geordano Llamuca López
+
+DOCENTE:
+- Ing. María del Carmen Salazar Torres, Mgtr.
+
+FECHA DE ENTREGA:
+- Noviembre 2026
+
+================================================================================
+CONTENIDO DE ESTE PAQUETE DE ENTREGA (.ZIP)
+================================================================================
+
+1. SCRIPTS SQL (Deben ejecutarse en orden secuencial del 01 al 08 sobre SQL Server 2019 o superior):
+   - 01_DDL.sql           : Creacion de la base de datos (BD_ECORAEE) y esquema relacional con restricciones.
+   - 02_DML.sql           : Poblado inicial de catalogos, centros, usuarios, dispositivos y trazabilidad.
+   - 03_pruebas.sql       : Pruebas unitarias de restricciones CHECK y FK implementadas en Fase 2.
+   - 04_consultas.sql     : Consultas analiticas del negocio desarrolladas en Fase 2.
+   - 05_vistas.sql        : Vistas requeridas (Estado actual, Inventario por centro, Pendientes evaluacion) con SELECTs.
+   - 06_programables.sql  : Procedimientos almacenados (Evaluacion tecnica, Transferencia con transaccion) y Funcion escalar de dias.
+   - 07_triggers.sql      : Disparadores de auditoria de historial de estados y de validacion de regla de negocio (Destino final).
+   - 08_transacciones.sql : Demostracion practica de propiedades ACID (Caso A: Commit, Caso B: Rollback, Caso C: Sin transaccion).
+
+2. DOCUMENTOS DE INFORME Y EVIDENCIA:
+   - Informe_Fase3_BDD_Grupo8.pdf  : Informe formal completo con caratula, integrantes, explicacion teorica, capturas de ejecucion y resultados tabulares, y declaracion de uso etico de herramientas.
+   - Informe_Fase3_BDD_Grupo8.docx : Version editable del informe.
+
+================================================================================
+GUIA RAPIDA DE EJECUCION EN SQL SERVER MANAGEMENT STUDIO (SSMS)
+================================================================================
+
+Paso 1: Abrir Microsoft SQL Server Management Studio (SSMS) y conectarse a su instancia local.
+Paso 2: Abrir y ejecutar '01_DDL.sql' (presionar F5). Esto creara la base de datos BD_ECORAEE.
+Paso 3: Abrir y ejecutar '02_DML.sql' (presionar F5). Esto insertara los datos base.
+Paso 4: Abrir y ejecutar '03_pruebas.sql' y '04_consultas.sql' (opcionales de Fase 2).
+Paso 5: Abrir y ejecutar '05_vistas.sql' (F5).
+Paso 6: Abrir y ejecutar '06_programables.sql' (F5).
+Paso 7: Abrir y ejecutar '07_triggers.sql' (F5).
+Paso 8: Abrir y ejecutar '08_transacciones.sql' (F5).
+
+Todos los scripts han sido testeados con sintaxis compatible T-SQL estricta (batch separators GO, transacciones controladas y tipado ANSI).
+================================================================================

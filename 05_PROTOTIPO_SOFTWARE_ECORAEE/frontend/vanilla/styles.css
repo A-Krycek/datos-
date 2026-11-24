@@ -14,20 +14,26 @@
     --text-muted: #64748b;
     --border-color: #e2e8f0;
     
-    --brand-primary: #10b981;       /* Verde Circular */
-    --brand-primary-hover: #059669;
-    --brand-dark: #064e3b;
-    --brand-light: #ecfdf5;
+    /* Branding Oficial UIDE - Universidad Internacional del Ecuador (Powered by ASU) */
+    --brand-primary: #920049;       /* UIDE Vino Tinto Oficial */
+    --brand-primary-hover: #700038;
+    --brand-dark: #4a0025;
+    --brand-light: #fdedf4;
+
+    --brand-gold: #e8a701;          /* UIDE Oro Oficial */
+    --brand-gold-hover: #b88500;
+    --brand-gold-light: #fef8e7;
+    --brand-gold-border: #f9df98;
 
     --accent-blue: #2563eb;
     --accent-blue-light: #eff6ff;
-    --accent-amber: #d97706;
-    --accent-amber-light: #fffbeb;
-    --accent-purple: #7c3aed;
-    --accent-purple-light: #f5f3ff;
+    --accent-amber: #e8a701;
+    --accent-amber-light: #fef8e7;
+    --accent-purple: #920049;
+    --accent-purple-light: #fdedf4;
     --accent-red: #ef4444;
     --accent-red-light: #fef2f2;
-    --accent-emerald: #059669;
+    --accent-emerald: #10b981;
 
     --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --card-shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);

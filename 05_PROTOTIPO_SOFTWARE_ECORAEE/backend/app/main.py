@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Asegurar que el path raíz del proyecto esté en sys.path para importaciones
 root_path = Path(__file__).resolve().parent.parent.parent
@@ -9,14 +10,14 @@ if str(root_path) not in sys.path:
     sys.path.insert(0, str(root_path))
 
 from backend.app.config import settings
-from backend.app.database import engine, Base
-from backend.app.routers import auth, devices, network
+from backend.app.database import init_db
+from backend.app.routers import auth, devices, network, evidences
 
-# Inicialización de tablas en la base de datos
+# Inicialización de tablas en la base de datos nativa SQLite
 try:
-    Base.metadata.create_all(bind=engine)
+    init_db()
 except Exception as e:
-    print(f"[EcoRAEE Backend] Advertencia al conectar/crear tablas en BD: {e}")
+    print(f"[EcoRAEE Backend] Advertencia al conectar/crear tablas en BD SQLite: {e}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -46,13 +47,15 @@ app.add_middleware(
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(devices.router, prefix=settings.API_V1_STR)
 app.include_router(network.router, prefix=settings.API_V1_STR)
+app.include_router(evidences.router, prefix=settings.API_V1_STR)
 
 @app.get("/", tags=["Sistema"])
 def root():
     return {
-        "sistema": "EcoRAEE Cloud API",
+        "sistema": "EcoRAEE Cloud API - UIDE / ASU",
         "version": "1.0.0",
         "estado": "OPERATIVO",
+        "app_frontend": "/app",
         "documentacion": "/docs",
         "entorno": settings.ENVIRONMENT
     }
@@ -61,3 +64,8 @@ def root():
 def health_check():
     """Endpoint de comprobación de salud para el balanceador ALB de AWS (RNF-02)."""
     return {"status": "healthy"}
+
+# Montaje de la SPA de EcoRAEE con Branding UIDE
+vanilla_frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend" / "vanilla"
+if vanilla_frontend_dir.exists():
+    app.mount("/app", StaticFiles(directory=str(vanilla_frontend_dir), html=True), name="frontend_app")

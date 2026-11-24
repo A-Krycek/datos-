@@ -1,27 +1,36 @@
+import sqlite3
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
-from backend.app.database import get_db
-from backend.app.models.entities import Usuario, RolSistema
-from backend.app.schemas.dtos import Token, UserResponse
-from backend.app.security import (
-    verify_password, create_access_token, get_current_user, settings
-)
+try:
+    from backend.app.database import get_db
+    from backend.app.schemas.dtos import Token, UserResponse
+    from backend.app.security import (
+        verify_password, create_access_token, get_current_user, settings
+    )
+except ImportError:
+    from app.database import get_db
+    from app.schemas.dtos import Token, UserResponse
+    from app.security import (
+        verify_password, create_access_token, get_current_user, settings
+    )
 
 router = APIRouter(prefix="/auth", tags=["Autenticación y RBAC"])
 
 @router.post("/login", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: sqlite3.Connection = Depends(get_db)
 ):
     """
     Autentica al usuario mediante credenciales institucionales y emite un JWT con rol (CP-01).
+    Utiliza consultas SQL directas en SQLite sin SQLAlchemy.
     """
-    user = db.query(Usuario).filter(Usuario.username == form_data.username).first()
-    
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM usuario WHERE username = ?", (form_data.username,))
+    user = cursor.fetchone()
+
     # Credenciales demo por defecto si la base está recién inicializada
     if not user:
         demo_users = {
@@ -47,35 +56,35 @@ def login_for_access_token(
                 "username": form_data.username,
                 "role": role_code
             }
-        
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Nombre de usuario o contraseña incorrectos",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not verify_password(form_data.password, user.password_hash):
+    if not verify_password(form_data.password, user["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Nombre de usuario o contraseña incorrectos",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not user.activo:
+    if not user["activo"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Usuario inactivo en el sistema"
         )
 
-    role_code = user.rol.codigo if user.rol else "ROL_OPERADOR"
+    role_code = user["role"] if "role" in user.keys() else "ROL_OPERADOR"
     access_token = create_access_token(
-        data={"sub": user.username, "role": role_code, "user_id": user.id_usuario}
+        data={"sub": user["username"], "role": role_code, "user_id": user["id_usuario"]}
     )
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "username": user.username,
+        "username": user["username"],
         "role": role_code
     }
 

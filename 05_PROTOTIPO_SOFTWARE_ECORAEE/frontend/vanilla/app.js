@@ -10,7 +10,9 @@
  */
 
 // Configuración de API Backend
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = (typeof window !== "undefined" && window.location.hostname && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1")
+    ? `${window.location.protocol}//${window.location.host}/api/v1`
+    : "http://localhost:8000/api/v1";
 
 // ==============================================================================
 // 1. DATASET SEMILLA INICIAL DEL CAMPUS UIDA
